@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("UpxSharp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+02da518f0b79c3c0ba617fbb6641559526483203")]
 [assembly: System.Reflection.AssemblyProductAttribute("UpxSharp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("UpxSharp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
