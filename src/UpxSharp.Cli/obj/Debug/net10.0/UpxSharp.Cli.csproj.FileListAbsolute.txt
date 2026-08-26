@@ -20,3 +20,4 @@ C:\Projetos\UpxSharp\src\UpxSharp.Cli\obj\Debug\net10.0\refint\UpxSharp.Cli.dll
 C:\Projetos\UpxSharp\src\UpxSharp.Cli\obj\Debug\net10.0\UpxSharp.Cli.pdb
 C:\Projetos\UpxSharp\src\UpxSharp.Cli\obj\Debug\net10.0\UpxSharp.Cli.genruntimeconfig.cache
 C:\Projetos\UpxSharp\src\UpxSharp.Cli\obj\Debug\net10.0\ref\UpxSharp.Cli.dll
+C:\Projetos\UpxSharp\src\UpxSharp.Cli\obj\Debug\net10.0\UpxSharp.Cli.sourcelink.json

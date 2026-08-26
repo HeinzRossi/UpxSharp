@@ -12,3 +12,4 @@ C:\Projetos\UpxSharp\src\UpxSharp.Shell\obj\Debug\net10.0-windows\refint\UpxShar
 C:\Projetos\UpxSharp\src\UpxSharp.Shell\obj\Debug\net10.0-windows\UpxSharp.Shell.pdb
 C:\Projetos\UpxSharp\src\UpxSharp.Shell\obj\Debug\net10.0-windows\UpxSharp.Shell.genruntimeconfig.cache
 C:\Projetos\UpxSharp\src\UpxSharp.Shell\obj\Debug\net10.0-windows\ref\UpxSharp.Shell.dll
+C:\Projetos\UpxSharp\src\UpxSharp.Shell\obj\Debug\net10.0-windows\UpxSharp.Shell.sourcelink.json

@@ -123,6 +123,13 @@ public partial class MainViewModel : ObservableObject
                         ProgressViewModel.UpdateCurrentFile(file.FileName, progress);
                     });
                 },
+                onOverallProgress: overallProgress =>
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        ProgressViewModel.UpdateOverallProgress(overallProgress);
+                    });
+                },
                 onLog: ProgressViewModel.AddLog,
                 cancellationToken);
 

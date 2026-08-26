@@ -1,5 +1,5 @@
 ﻿UpxSharp.Wpf
-1.0.0.0
+
 
 winexe
 C#
@@ -12,9 +12,9 @@ TRACE;DEBUG;NET;NET10_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_O
 C:\Projetos\UpxSharp\src\UpxSharp.Wpf\App.xaml
 10-885700603
 
-332033711277
+311715521943
 215-77969305
 Themes\Animations.xaml;Themes\Colors.xaml;Themes\Controls.xaml;Themes\DataGrid.xaml;Themes\Typography.xaml;Views\Controls\FileDropPanel.xaml;Views\Controls\FileListView.xaml;Views\Controls\OptionsPanel.xaml;Views\Controls\ProgressPanel.xaml;Views\MainWindow.xaml;
 
-True
+False
 

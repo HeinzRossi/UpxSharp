@@ -116,3 +116,4 @@ C:\Projetos\UpxSharp\tests\UpxSharp.Wpf.Tests\bin\Debug\net10.0-windows\UpxSharp
 C:\Projetos\UpxSharp\tests\UpxSharp.Wpf.Tests\bin\Debug\net10.0-windows\UpxSharp.Cli.runtimeconfig.json
 C:\Projetos\UpxSharp\tests\UpxSharp.Wpf.Tests\bin\Debug\net10.0-windows\UpxSharp.Cli.exe
 C:\Projetos\UpxSharp\tests\UpxSharp.Wpf.Tests\bin\Debug\net10.0-windows\UpxSharp.Shell.comhost.dll
+C:\Projetos\UpxSharp\tests\UpxSharp.Wpf.Tests\obj\Debug\net10.0-windows\UpxSharp.Wpf.Tests.sourcelink.json

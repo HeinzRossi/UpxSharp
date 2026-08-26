@@ -21,6 +21,7 @@ public interface IFileProcessingService
         IEnumerable<FileItemViewModel> files,
         FileProcessingRequest request,
         Action<FileItemViewModel, double> onProgress,
+        Action<double> onOverallProgress,
         Action<string, LogLevel> onLog,
         CancellationToken cancellationToken);
 }

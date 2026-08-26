@@ -15,19 +15,24 @@ public sealed class FileProcessingService : IFileProcessingService
         IEnumerable<FileItemViewModel> files,
         FileProcessingRequest request,
         Action<FileItemViewModel, double> onProgress,
+        Action<double> onOverallProgress,
         Action<string, LogLevel> onLog,
         CancellationToken cancellationToken)
     {
         ValidateRequest(request);
 
-        foreach (var file in files)
+        var fileList = files.ToList();
+        onOverallProgress(0);
+
+        for (int fileIndex = 0; fileIndex < fileList.Count; fileIndex++)
         {
+            var file = fileList[fileIndex];
             cancellationToken.ThrowIfCancellationRequested();
 
             file.Status = FileProcessingStatus.Processing;
             file.Progress = 0;
             file.ErrorMessage = string.Empty;
-            onProgress(file, 0);
+            ReportProgress(file, 0, fileIndex, fileList.Count, onProgress, onOverallProgress);
 
             var stopwatch = Stopwatch.StartNew();
             string? partialOutputPath = null;
@@ -37,7 +42,7 @@ public sealed class FileProcessingService : IFileProcessingService
                 ProcessingResult result = await Task.Run(() =>
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    onProgress(file, 15);
+                    ReportProgress(file, 15, fileIndex, fileList.Count, onProgress, onOverallProgress);
 
                     if (request.Options.Command == UpxCommand.Test)
                         return TestRoundTrip(file.FilePath, request.Options, file, onProgress, cancellationToken);
@@ -46,7 +51,7 @@ public sealed class FileProcessingService : IFileProcessingService
                     bool replaceOriginal = request.OutputMode == FileOutputMode.ReplaceOriginal;
                     partialOutputPath = CreateTemporaryPathBeside(outputPath);
 
-                    onProgress(file, 35);
+                    ReportProgress(file, 35, fileIndex, fileList.Count, onProgress, onOverallProgress);
                     ProcessFile(
                         file.FilePath,
                         partialOutputPath,
@@ -59,7 +64,7 @@ public sealed class FileProcessingService : IFileProcessingService
                         request.Options);
 
                     cancellationToken.ThrowIfCancellationRequested();
-                    onProgress(file, 90);
+                    ReportProgress(file, 90, fileIndex, fileList.Count, onProgress, onOverallProgress);
 
                     if (replaceOriginal)
                     {
@@ -72,6 +77,9 @@ public sealed class FileProcessingService : IFileProcessingService
                     }
                     else
                     {
+                        if (request.Options.KeepBackup)
+                            CreateBackupCopy(file.FilePath);
+
                         File.Move(partialOutputPath, outputPath, overwrite: true);
                         partialOutputPath = null;
                     }
@@ -82,7 +90,7 @@ public sealed class FileProcessingService : IFileProcessingService
                 stopwatch.Stop();
                 file.CompressedSize = result.ResultSize;
                 file.Status = FileProcessingStatus.Done;
-                onProgress(file, 100);
+                ReportProgress(file, 100, fileIndex, fileList.Count, onProgress, onOverallProgress);
 
                 string action = request.Options.Command switch
                 {
@@ -114,9 +122,22 @@ public sealed class FileProcessingService : IFileProcessingService
                 file.Status = FileProcessingStatus.Error;
                 file.ErrorMessage = ex.Message;
                 file.Progress = 0;
+                onOverallProgress((fileIndex + 1) * 100d / fileList.Count);
                 onLog($"✘ {file.FileName}: {ex.Message}", LogLevel.Error);
             }
         }
+    }
+
+    private static void ReportProgress(
+        FileItemViewModel file,
+        double currentPercent,
+        int fileIndex,
+        int fileCount,
+        Action<FileItemViewModel, double> onProgress,
+        Action<double> onOverallProgress)
+    {
+        onProgress(file, currentPercent);
+        onOverallProgress((fileIndex + currentPercent / 100d) * 100d / fileCount);
     }
 
     private static void ValidateRequest(FileProcessingRequest request)
@@ -441,6 +462,9 @@ public sealed class FileProcessingService : IFileProcessingService
                 backupPath,
                 ignoreMetadataErrors: true);
 
+            if (keepBackup && (backupPath is null || !File.Exists(backupPath)))
+                throw new IOException("Não foi possível criar o backup do original.");
+
             if (previousBackupPath is not null)
                 DeletePartialOutput(previousBackupPath);
         }
@@ -455,6 +479,22 @@ public sealed class FileProcessingService : IFileProcessingService
             }
 
             throw;
+        }
+    }
+
+    private static void CreateBackupCopy(string originalPath)
+    {
+        string backupPath = originalPath + ".bak";
+        string temporaryBackupPath = backupPath + $".{Guid.NewGuid():N}.tmp";
+
+        try
+        {
+            File.Copy(originalPath, temporaryBackupPath, overwrite: true);
+            File.Move(temporaryBackupPath, backupPath, overwrite: true);
+        }
+        finally
+        {
+            DeletePartialOutput(temporaryBackupPath);
         }
     }
 

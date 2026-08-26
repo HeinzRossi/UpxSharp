@@ -36,6 +36,70 @@ public sealed class FileProcessingServiceTests
     }
 
     [Fact]
+    public async Task BatchProgress_ReportsCurrentAndOverallProgress()
+    {
+        using var directory = new TempDirectory();
+        var first = CreateFileItem(directory.CreateFile("first.exe", CreateSyntheticPe(0x014C)));
+        var second = CreateFileItem(directory.CreateFile("second.exe", CreateSyntheticPe(0x014C)));
+        var overall = new List<double>();
+
+        var service = new FileProcessingService();
+        await service.ProcessAsync(
+            [first, second],
+            CreateRequest(UpxCommand.Compress, FileOutputMode.SameDirectoryWithSuffix, force: true),
+            (file, progress) => file.Progress = progress,
+            overall.Add,
+            (_, _) => { },
+            CancellationToken.None);
+
+        Assert.Equal(100, first.Progress);
+        Assert.Equal(100, second.Progress);
+        Assert.Equal(100, overall[^1]);
+        Assert.Contains(overall, value => value is > 0 and < 50);
+        Assert.Contains(overall, value => value is > 50 and < 100);
+    }
+
+    [Fact]
+    public async Task Compress_WithSuffixAndBackup_CreatesBackupBesideOriginal()
+    {
+        using var directory = new TempDirectory();
+        string inputPath = directory.CreateFile("sample.exe", CreateSyntheticPe(0x014C));
+        byte[] original = File.ReadAllBytes(inputPath);
+
+        await ProcessAsync(
+            [CreateFileItem(inputPath)],
+            CreateRequest(
+                UpxCommand.Compress,
+                FileOutputMode.SameDirectoryWithSuffix,
+                force: true,
+                keepBackup: true));
+
+        Assert.Equal(original, File.ReadAllBytes(inputPath + ".bak"));
+        Assert.True(File.Exists(Path.Combine(directory.Path, "sample.upx")));
+    }
+
+    [Fact]
+    public async Task Compress_ToCustomDirectoryAndBackup_CreatesBackupBesideOriginal()
+    {
+        using var directory = new TempDirectory();
+        string inputPath = directory.CreateFile("sample.exe", CreateSyntheticPe(0x014C));
+        byte[] original = File.ReadAllBytes(inputPath);
+        string outputDirectory = Directory.CreateDirectory(Path.Combine(directory.Path, "out")).FullName;
+
+        await ProcessAsync(
+            [CreateFileItem(inputPath)],
+            CreateRequest(
+                UpxCommand.Compress,
+                FileOutputMode.CustomDirectory,
+                outputDirectory,
+                force: true,
+                keepBackup: true));
+
+        Assert.Equal(original, File.ReadAllBytes(inputPath + ".bak"));
+        Assert.True(File.Exists(Path.Combine(outputDirectory, "sample.upx")));
+    }
+
+    [Fact]
     public async Task Decompress_ToCustomDirectory_RestoresOriginal()
     {
         using var directory = new TempDirectory();
@@ -141,6 +205,7 @@ public sealed class FileProcessingServiceTests
             [file],
             CreateRequest(UpxCommand.Compress, FileOutputMode.ReplaceOriginal),
             (item, progress) => item.Progress = progress,
+            _ => { },
             (message, _) => logs.Add(message),
             CancellationToken.None);
 
@@ -165,8 +230,9 @@ public sealed class FileProcessingServiceTests
                 CreateRequest(
                     UpxCommand.Compress,
                     FileOutputMode.CustomDirectory,
-                    missing),
+                missing),
                 (_, _) => { },
+                _ => { },
                 (_, _) => { },
                 CancellationToken.None));
 
@@ -195,6 +261,7 @@ public sealed class FileProcessingServiceTests
                     if (progress >= 35)
                         cancellation.Cancel();
                 },
+                _ => { },
                 (_, _) => { },
                 cancellation.Token));
 
@@ -212,6 +279,7 @@ public sealed class FileProcessingServiceTests
             files,
             request,
             (file, progress) => file.Progress = progress,
+            _ => { },
             (_, _) => { },
             CancellationToken.None);
     }

@@ -13,7 +13,8 @@ public partial class ProgressViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsPanelVisible))]
     private bool _isProcessing;
     [ObservableProperty] private string _currentFileName = string.Empty;
-    [ObservableProperty] private double _progressPercent;
+    [ObservableProperty] private double _currentFileProgressPercent;
+    [ObservableProperty] private double _overallProgressPercent;
     [ObservableProperty] private string _speed = string.Empty;
 
     public ProgressViewModel()
@@ -30,9 +31,12 @@ public partial class ProgressViewModel : ObservableObject
         RunOnUiThread(() =>
         {
             CurrentFileName = name;
-            ProgressPercent = percent;
+            CurrentFileProgressPercent = percent;
         });
     }
+
+    public void UpdateOverallProgress(double percent)
+        => RunOnUiThread(() => OverallProgressPercent = percent);
 
     public void AddLog(string message, LogLevel level)
         => RunOnUiThread(() => LogEntries.Add(new LogEntry(message, level)));
@@ -42,7 +46,8 @@ public partial class ProgressViewModel : ObservableObject
         RunOnUiThread(() =>
         {
             LogEntries.Clear();
-            ProgressPercent = 0;
+            CurrentFileProgressPercent = 0;
+            OverallProgressPercent = 0;
             CurrentFileName = string.Empty;
             Speed = string.Empty;
         });

@@ -10,3 +10,4 @@ C:\Projetos\UpxSharp\src\UpxSharp\obj\Debug\net10.0\UpxSharp.dll
 C:\Projetos\UpxSharp\src\UpxSharp\obj\Debug\net10.0\refint\UpxSharp.dll
 C:\Projetos\UpxSharp\src\UpxSharp\obj\Debug\net10.0\UpxSharp.pdb
 C:\Projetos\UpxSharp\src\UpxSharp\obj\Debug\net10.0\ref\UpxSharp.dll
+C:\Projetos\UpxSharp\src\UpxSharp\obj\Debug\net10.0\UpxSharp.sourcelink.json

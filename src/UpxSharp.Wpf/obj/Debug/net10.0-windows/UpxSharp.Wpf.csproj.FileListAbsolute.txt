@@ -49,3 +49,4 @@ C:\Projetos\UpxSharp\src\UpxSharp.Wpf\bin\Debug\net10.0-windows\UpxSharp.Cli.dep
 C:\Projetos\UpxSharp\src\UpxSharp.Wpf\bin\Debug\net10.0-windows\UpxSharp.Cli.runtimeconfig.json
 C:\Projetos\UpxSharp\src\UpxSharp.Wpf\bin\Debug\net10.0-windows\UpxSharp.Cli.exe
 C:\Projetos\UpxSharp\src\UpxSharp.Wpf\bin\Debug\net10.0-windows\UpxSharp.Shell.comhost.dll
+C:\Projetos\UpxSharp\src\UpxSharp.Wpf\obj\Debug\net10.0-windows\UpxSharp.Wpf.sourcelink.json

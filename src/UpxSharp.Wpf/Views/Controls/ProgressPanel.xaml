@@ -19,13 +19,18 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <Grid Grid.Row="0" Margin="0,0,0,4">
                     <TextBlock Text="{Binding CurrentFileName}"
                                Style="{StaticResource Text.Body}" FontWeight="Medium" />
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <TextBlock Text="{Binding ProgressPercent, StringFormat={}{0:F0}%}"
+                        <TextBlock Text="Arquivo atual" Style="{StaticResource Text.Label}" Margin="0,0,4,0" />
+                        <TextBlock Text="{Binding CurrentFileProgressPercent, StringFormat={}{0:F0}%}"
+                                   Style="{StaticResource Text.Label}" Margin="0,0,12,0" />
+                        <TextBlock Text="Total" Style="{StaticResource Text.Label}" Margin="0,0,4,0" />
+                        <TextBlock Text="{Binding OverallProgressPercent, StringFormat={}{0:F0}%}"
                                    Style="{StaticResource Text.Label}" Margin="0,0,12,0" />
                         <TextBlock Text="{Binding Speed}" Style="{StaticResource Text.Label}" />
                         <Button Content="Cancelar"
@@ -39,7 +44,11 @@
 
                 <ProgressBar Grid.Row="1"
                              Style="{StaticResource ProgressBar.Accent}"
-                             Value="{Binding ProgressPercent}" Maximum="100" />
+                             Value="{Binding CurrentFileProgressPercent}" Maximum="100" />
+                <ProgressBar Grid.Row="2"
+                             Style="{StaticResource ProgressBar.Accent}"
+                             Value="{Binding OverallProgressPercent}" Maximum="100"
+                             Margin="0,4,0,0" />
             </Grid>
 
             <!-- Log -->
