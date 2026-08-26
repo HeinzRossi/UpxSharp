@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>13</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Stubs/Resources/*.stub" />
+    <EmbeddedResource Include="Stubs/Resources/stubs.manifest.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="UpxSharp.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.*" />
+    <PackageReference Include="SharpZipLib" Version="1.*" />
+    <PackageReference Include="ManagedLzma" Version="0.2.0-alpha-7" />
+    <PackageReference Include="ZstdSharp.Port" Version="*" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,138 @@
+<UserControl x:Class="UpxSharp.Wpf.Views.Controls.OptionsPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{StaticResource Brush.Background.Surface}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="16">
+
+            <!-- Seção: Compressão -->
+            <TextBlock Text="COMPRESSÃO" Style="{StaticResource Text.Label}"
+                       FontWeight="SemiBold" Margin="0,0,0,12" />
+
+            <TextBlock Text="Método" Style="{StaticResource Text.Label}" Margin="0,0,0,4" />
+            <ComboBox Style="{StaticResource ComboBox.Dark}"
+                      ItemsSource="{Binding AvailableMethods}"
+                      SelectedItem="{Binding SelectedMethod}"
+                      ToolTip="Algoritmo de compressão"
+                      Margin="0,0,0,12" />
+
+            <Grid Margin="0,0,0,4">
+                <TextBlock Text="Nível" Style="{StaticResource Text.Label}" />
+                <TextBlock Text="{Binding Level}" Style="{StaticResource Text.Label}"
+                           HorizontalAlignment="Right" />
+            </Grid>
+            <Slider Style="{StaticResource Slider.Level}"
+                    Value="{Binding Level}"
+                    ValueChanged="LevelSlider_ValueChanged"
+                    ToolTip="Nível de compressão"
+                    Margin="0,0,0,12" />
+
+            <TextBlock Text="Filtro de código" Style="{StaticResource Text.Label}" Margin="0,0,0,4" />
+            <ComboBox Style="{StaticResource ComboBox.Dark}"
+                      ItemsSource="{Binding AvailableFilters}"
+                      SelectedItem="{Binding SelectedFilter}"
+                      ToolTip="Aplicar filtros de código automaticamente"
+                      Margin="0,0,0,20" />
+
+            <!-- Divisor -->
+            <Rectangle Height="1" Fill="{StaticResource Brush.Border.Subtle}" Margin="0,0,0,16" />
+
+            <!-- Seção: Opções -->
+            <TextBlock Text="OPÇÕES" Style="{StaticResource Text.Label}"
+                       FontWeight="SemiBold" Margin="0,0,0,12" />
+
+            <CheckBox Content="Criar backup do original (.BAK)"
+                      Style="{StaticResource CheckBox.Dark}"
+                      ToolTip="Preservar cópia .bak ao substituir o original"
+                      IsChecked="{Binding Backup}" />
+            <CheckBox Content="Forçar compressão"
+                      Style="{StaticResource CheckBox.Dark}"
+                      ToolTip="Permitir processamento quando o Core exigir confirmação"
+                      IsChecked="{Binding Force}" />
+
+            <!-- Divisor -->
+            <Rectangle Height="1" Fill="{StaticResource Brush.Border.Subtle}" Margin="0,0,0,16" />
+
+            <!-- Seção: Saída -->
+            <TextBlock Text="ARQUIVO DE SAÍDA" Style="{StaticResource Text.Label}"
+                       FontWeight="SemiBold" Margin="0,0,0,12" />
+
+            <ComboBox Style="{StaticResource ComboBox.Dark}"
+                      ItemsSource="{Binding OutputModes}"
+                      SelectedItem="{Binding SelectedOutputMode}"
+                      ToolTip="Escolher onde salvar os arquivos processados"
+                      Margin="0,0,0,8" />
+
+            <!-- Caminho personalizado, visível apenas no modo customizado -->
+            <Grid Visibility="{Binding IsCustomOutputPath,
+                      Converter={StaticResource BoolToVisibilityConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0"
+                         Text="{Binding CustomOutputPath}"
+                         Background="{StaticResource Brush.Background.Surface}"
+                         Foreground="{StaticResource Brush.Text.Primary}"
+                         BorderBrush="{StaticResource Brush.Border.Default}"
+                         BorderThickness="1" Padding="8,4"
+                         ToolTip="Diretório personalizado de saída"
+                         LostFocus="OutputPathTextBox_LostFocus"
+                         KeyDown="OutputPathTextBox_KeyDown"
+                         FontSize="{StaticResource FontSize.SM}" />
+                <Button Grid.Column="1" Content="…"
+                        Style="{StaticResource Button.Ghost}"
+                        Command="{Binding BrowseOutputCommand}"
+                        ToolTip="Selecionar diretório de saída"
+                        Margin="4,0,0,0" Width="32" />
+            </Grid>
+
+            <!-- Divisor -->
+            <Rectangle Height="1" Fill="{StaticResource Brush.Border.Subtle}" Margin="0,16,0,16" />
+
+            <!-- Seção: Integração com Windows Explorer -->
+            <TextBlock Text="5. Integração com Windows Explorer"
+                       Style="{StaticResource Text.Body}"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,12" />
+
+            <TextBlock Text="Adiciona uma opção no menu de contexto para arquivos .exe."
+                       Style="{StaticResource Text.Body}"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,20" />
+
+            <TextBlock Text="{Binding ExplorerIntegrationStatusText}"
+                       Style="{StaticResource Text.Body}"
+                       TextWrapping="Wrap"
+                       LineStackingStrategy="BlockLineHeight"
+                       LineHeight="18"
+                       TextAlignment="Center"
+                       HorizontalAlignment="Stretch"
+                       ToolTip="{Binding ExplorerIntegrationStatusDetailText}"
+                       Margin="0,0,0,20" />
+
+            <CheckBox Content="Fechar após execução pelo menu do Explorer"
+                      Style="{StaticResource CheckBox.Dark}"
+                      IsChecked="{Binding CloseAfterContextMenuExecution}"
+                      ToolTip="Quando iniciado pelo menu de contexto, fecha o app após compressão concluída com sucesso"
+                      Margin="0,0,0,24" />
+
+            <StackPanel>
+                <Button Content="Instalar integração"
+                        Style="{StaticResource Button.Ghost}"
+                        Command="{Binding InstallExplorerIntegrationCommand}"
+                        HorizontalAlignment="Stretch"
+                        Margin="0,0,0,8"
+                        ToolTip="Adicionar a opção Comprimir com UpxSharp ao menu de contexto de arquivos .exe" />
+
+                <Button Content="Remover integração"
+                        Style="{StaticResource Button.Ghost}"
+                        Command="{Binding RemoveExplorerIntegrationCommand}"
+                        HorizontalAlignment="Stretch"
+                        ToolTip="Remover a opção Comprimir com UpxSharp do menu de contexto de arquivos .exe" />
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,62 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>Assets\Icons\upxsharp-logo.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Icons\upxsharp-logo.ico" />
+    <Resource Include="Assets\Icons\upxsharp-logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Converters\" />
+    <Folder Include="Views\Controls\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UpxSharp\UpxSharp.csproj" />
+    <ProjectReference Include="..\UpxSharp.Cli\UpxSharp.Cli.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\UpxSharp.Shell\UpxSharp.Shell.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <Target Name="CopyShellIntegrationArtifacts" AfterTargets="Build">
+    <ItemGroup>
+      <ShellIntegrationFiles Include="..\UpxSharp.Cli\bin\$(Configuration)\net10.0\UpxSharp.Cli.exe" />
+      <ShellIntegrationFiles Include="..\UpxSharp.Cli\bin\$(Configuration)\net10.0\UpxSharp.Cli.dll" />
+      <ShellIntegrationFiles Include="..\UpxSharp.Cli\bin\$(Configuration)\net10.0\UpxSharp.Cli.deps.json" />
+      <ShellIntegrationFiles Include="..\UpxSharp.Cli\bin\$(Configuration)\net10.0\UpxSharp.Cli.runtimeconfig.json" />
+      <ShellIntegrationFiles Include="..\UpxSharp.Shell\bin\$(Configuration)\net10.0-windows\UpxSharp.Shell.comhost.dll" />
+      <ShellIntegrationFiles Include="..\UpxSharp.Shell\obj\$(Configuration)\net10.0-windows\UpxSharp.Shell.clsidmap" />
+      <ShellIntegrationFiles Include="..\UpxSharp.Shell\bin\$(Configuration)\net10.0-windows\UpxSharp.Shell.dll" />
+      <ShellIntegrationFiles Include="..\UpxSharp.Shell\bin\$(Configuration)\net10.0-windows\UpxSharp.Shell.deps.json" />
+      <ShellIntegrationFiles Include="..\UpxSharp.Shell\bin\$(Configuration)\net10.0-windows\UpxSharp.Shell.runtimeconfig.json" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ShellIntegrationFiles)"
+          DestinationFolder="$(TargetDir)"
+          SkipUnchangedFiles="true"
+          Condition="Exists('%(ShellIntegrationFiles.Identity)')" />
+    <ItemGroup>
+      <SparsePackageFiles Include="..\..\packaging\UpxSharp.Sparse\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SparsePackageFiles)"
+          DestinationFiles="@(SparsePackageFiles->'$(TargetDir)UpxSharp.Sparse\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="..\..\artifacts\windows-shell\UpxSharp.Sparse.msix"
+          DestinationFolder="$(TargetDir)"
+          SkipUnchangedFiles="true"
+          Condition="Exists('..\..\artifacts\windows-shell\UpxSharp.Sparse.msix')" />
+  </Target>
+
+</Project>

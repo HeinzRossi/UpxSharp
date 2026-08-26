@@ -1,0 +1,145 @@
+﻿<Window x:Class="UpxSharp.Wpf.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:UpxSharp.Wpf"
+        xmlns:controls="clr-namespace:UpxSharp.Wpf.Views.Controls"
+        mc:Ignorable="d"
+        Title="UpxSharp" Width="1000" Height="680"
+        MinWidth="800" MinHeight="500"
+        Icon="/UpxSharp.Wpf;component/Assets/Icons/upxsharp-logo.ico"
+        WindowStyle="None" AllowsTransparency="True"
+        Background="{StaticResource Brush.Background.Deep}"
+        ResizeMode="CanResizeWithGrip">
+
+    <Window.InputBindings>
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding BrowseFilesCommand}" />
+        <KeyBinding Key="F5" Command="{Binding CompressCommand}" />
+        <KeyBinding Key="Escape" Command="{Binding CancelProcessingCommand}" />
+    </Window.InputBindings>
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="40" ResizeBorderThickness="6"
+                      GlassFrameThickness="0" CornerRadius="8" />
+    </WindowChrome.WindowChrome>
+    
+    <Border CornerRadius="8"
+            BorderBrush="{StaticResource Brush.Border.Default}"
+            BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <!-- TitleBar -->
+                <RowDefinition Height="52" />
+                <!-- ToolBar -->
+                <RowDefinition Height="*" />
+                <!-- Conteúdo -->
+                <RowDefinition Height="Auto" />
+                <!-- ProgressPanel -->
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Background="{StaticResource Brush.Background.Elevated}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal"
+                            Margin="16,0" VerticalAlignment="Center">
+                    <Image Source="/UpxSharp.Wpf;component/Assets/Icons/upxsharp-logo.png"
+                           Width="18" Height="18" Margin="0,0,8,0" />
+                    <TextBlock Text="UpxSharp" Style="{StaticResource Text.Body}"
+                               FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <Rectangle Grid.Column="1" Fill="Transparent"
+                           MouseLeftButtonDown="TitleBar_MouseDown"/>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal"
+                            WindowChrome.IsHitTestVisibleInChrome="True">
+                    <Button Content="─" Width="46" Height="40"
+                            Style="{StaticResource Button.Ghost}"
+                            BorderThickness="0"
+                            ToolTip="Minimizar"
+                            Click="MinimizeButton_Click"/>
+                    <Button Content="□" Width="46" Height="40"
+                            Style="{StaticResource Button.Ghost}"
+                            BorderThickness="0"
+                            ToolTip="Maximizar ou restaurar"
+                            Click="MaximizeButton_Click"/>
+                    <Button Content="✕" Width="46" Height="40"
+                            Style="{StaticResource Button.Ghost}"
+                            BorderThickness="0"
+                            ToolTip="Fechar"
+                            Click="CloseButton_Click"/>
+                </StackPanel>
+            </Grid>
+
+            <Border Grid.Row="1"
+                    Background="{StaticResource Brush.Background.Elevated}"
+                    BorderBrush="{StaticResource Brush.Border.Subtle}"
+                    BorderThickness="0,0,0,1" Padding="12,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="⬆  Comprimir"
+                            Style="{StaticResource Button.Primary}"
+                            Command="{Binding CompressCommand}"
+                            ToolTip="Comprimir arquivos (F5)"
+                            Margin="0,0,8,0" />
+                    <Button Content="⬇  Descomprimir"
+                            Style="{StaticResource Button.Ghost}"
+                            Command="{Binding DecompressCommand}"
+                            ToolTip="Descomprimir arquivos"
+                            Margin="0,0,8,0" />
+                    <Button Content="🔍  Testar"
+                            Style="{StaticResource Button.Ghost}"
+                            Command="{Binding TestCommand}"
+                            ToolTip="Testar integridade por round-trip"
+                            Margin="0,0,8,0" />
+                    <Separator Width="1" Background="{StaticResource Brush.Border.Default}"
+                               Margin="8,8" />
+                    <Button Content="🗑  Limpar"
+                            Style="{StaticResource Button.Ghost}"
+                            Command="{Binding ClearFilesCommand}"
+                            ToolTip="Limpar lista"
+                            IsEnabled="{Binding HasFiles}" />
+                </StackPanel>
+            </Border>
+
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="1" />
+                    <ColumnDefinition Width="260" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Esquerda: drop zone OU lista -->
+                <Grid Grid.Column="0">
+                    <controls:FileDropPanel
+                        Visibility="{Binding HasFiles,
+                            Converter={StaticResource InvertedBoolToVisibilityConverter}}"
+                        DataContext="{Binding}" /> 
+
+                   <controls:FileListView 
+                        Visibility="{Binding HasFiles,
+                            Converter={StaticResource BoolToVisibilityConverter}}" /> 
+                </Grid>
+
+                <!-- Divisor -->
+                <Rectangle Grid.Column="1" Fill="{StaticResource Brush.Border.Subtle}" />
+
+                <!-- Direita: opções -->
+                <controls:OptionsPanel Grid.Column="2"
+                    DataContext="{Binding OptionsViewModel}" /> 
+            </Grid>
+
+            <!-- Progress + Log -->
+            <Border Grid.Row="3" Style="{StaticResource Style.ProgressPanelHost}">
+                <controls:ProgressPanel DataContext="{Binding ProgressViewModel}" />
+            </Border>
+
+        </Grid>
+
+    </Border>
+</Window>

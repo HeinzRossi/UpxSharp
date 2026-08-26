@@ -1,0 +1,130 @@
+{
+    "stubs":  [
+                  {
+                      "format":  "LinuxElfi386",
+                      "resourceName":  "i386-linux.elf.stub",
+                      "kind":  "real",
+                      "size":  5797,
+                      "sha256":  "C7A74FFB0AE74F80C1BC0F2A70B469A936A80F66C41D1F5103B456E590819BD7"
+                  },
+                  {
+                      "format":  "LinuxElfAmd64",
+                      "resourceName":  "amd64-linux.elf.stub",
+                      "kind":  "real",
+                      "size":  2869,
+                      "sha256":  "60AB09FD857880C04AE9158BEB8EC091E6D9376C65B6CE273A4CA608166693BB"
+                  },
+                  {
+                      "format":  "LinuxElfArmLE",
+                      "resourceName":  "arm-linux.elf.stub",
+                      "kind":  "real",
+                      "size":  15451,
+                      "sha256":  "8A53112D738291FABD0C946FE1C0A14926612799847144B29B68F57BD0091ABD"
+                  },
+                  {
+                      "format":  "LinuxElfArm64LE",
+                      "resourceName":  "arm64-linux.elf.stub",
+                      "kind":  "real",
+                      "size":  2971,
+                      "sha256":  "391F71BBAF0838F7DD522CC4F2979F0E4E17FA58937527CAD75AAC69BE1C8961"
+                  },
+                  {
+                      "format":  "LinuxElfMipsel",
+                      "resourceName":  "mipsel-linux.elf.stub",
+                      "kind":  "real",
+                      "size":  1904,
+                      "sha256":  "8C8D5B4FD7CF3A3E669A7D5BCEA6D8DF6EA303DE091D5190E049CB42C4D401C1"
+                  },
+                  {
+                      "format":  "LinuxElfMips",
+                      "resourceName":  "mips-linux.elf.stub",
+                      "kind":  "real",
+                      "size":  1941,
+                      "sha256":  "6326FC1E1985DFCD0BA4D38239D508A8C2E0A2E6A35E5FF3A50B13474844F5FF"
+                  },
+                  {
+                      "format":  "LinuxElf32Ppc",
+                      "resourceName":  "ppc32-linux.elf.stub",
+                      "kind":  "real",
+                      "size":  1424,
+                      "sha256":  "2EF6FA2DCA0C17E5C5088B0A9DF5F8DFB5DEF834D879302C206A9BE66D7232C7"
+                  },
+                  {
+                      "format":  "LinuxElf64Ppc",
+                      "resourceName":  "ppc64-linux.elf.stub",
+                      "kind":  "real",
+                      "size":  1903,
+                      "sha256":  "3CBB3E21C95C730B7D96E6103D3F8D50BB3ED8391DFE1FBABCAB952197B30DA3"
+                  },
+                  {
+                      "format":  "LinuxElfRiscv64",
+                      "resourceName":  "riscv64-linux.elf.stub",
+                      "kind":  "real",
+                      "size":  2910,
+                      "sha256":  "9F859EE06DAFE7CBA59E46B9ADB809BBF0705EE52B3DC974B790AC62E4863F11"
+                  },
+                  {
+                      "format":  "MachI386",
+                      "resourceName":  "i386-mach.macho.stub",
+                      "kind":  "real",
+                      "size":  9257,
+                      "sha256":  "70393F62C1AA92D64B7A51FF187B5B3DC046DA25EDE729BCBF11EEA5F869C373"
+                  },
+                  {
+                      "format":  "MachAMD64",
+                      "resourceName":  "amd64-mach.macho.stub",
+                      "kind":  "real",
+                      "size":  9065,
+                      "sha256":  "A48A88E0EBA328732A4F43C1C933D41416D663A2A9746BA579D934CAD925D9FB"
+                  },
+                  {
+                      "format":  "Vmlinuzi386",
+                      "resourceName":  "i386-vmlinuz.stub",
+                      "kind":  "real",
+                      "size":  25052,
+                      "sha256":  "27B091258A8259D0E15E3761C4BB51E91FB851AEE75D82C2646108C9456FCE67"
+                  },
+                  {
+                      "format":  "DosCom",
+                      "resourceName":  "dos-com.stub",
+                      "kind":  "real",
+                      "size":  4704,
+                      "sha256":  "96388E95A09D56E5F62A6484B5022170DE7C47FA523F16056F3D9C432F43111B"
+                  },
+                  {
+                      "format":  "DosExe",
+                      "resourceName":  "dos-exe.stub",
+                      "kind":  "real",
+                      "size":  26112,
+                      "sha256":  "0BAF9A16E60B010409883C7B591B3AD8C4075BDF27870F75824D6ACD0EC7DD4B"
+                  },
+                  {
+                      "format":  "AtariTos",
+                      "resourceName":  "atari-tos.stub",
+                      "kind":  "real",
+                      "size":  16638,
+                      "sha256":  "7CBA5DD556982AEDB52D584D58F35639E31F03AE2FF6F24E3F6CF63D02A6DA0D"
+                  },
+                  {
+                      "format":  "Ps1Exe",
+                      "resourceName":  "ps1-exe.stub",
+                      "kind":  "real",
+                      "size":  19977,
+                      "sha256":  "88DDC6B3D02666D4DDD98874AD197656F400AA6E8882FD5D335196FACCB0CB78"
+                  },
+                  {
+                      "format":  "Win32Pe",
+                      "resourceName":  "i386-win32.pe.stub",
+                      "kind":  "real",
+                      "size":  28258,
+                      "sha256":  "3714F908C5F3307CDFF869B9924C7EF75AC90CBAD8233D62D2757218FB6A1DCF"
+                  },
+                  {
+                      "format":  "Win64Pe",
+                      "resourceName":  "amd64-win64.pe.stub",
+                      "kind":  "real",
+                      "size":  14679,
+                      "sha256":  "CCD424696DA5FEB1AE05E0AA614483D6F5278668A359BE26743013A8D3D22E4E"
+                  }
+              ]
+}

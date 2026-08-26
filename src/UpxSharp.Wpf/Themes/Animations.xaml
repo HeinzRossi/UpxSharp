@@ -1,0 +1,219 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+    ══════════════════════════════════════════════════════════════════
+      Animations.xaml — UpxSharp WPF
+      Storyboards reutilizáveis e estilos com animações embutidas.
+      Filosofia: animações funcionais (feedback de estado), não decorativas.
+    ══════════════════════════════════════════════════════════════════
+    -->
+
+    <!-- ── Durações padrão ──────────────────────────────────────────── -->
+    <Duration x:Key="Duration.Fast">0:0:0.12</Duration>
+    <Duration x:Key="Duration.Normal">0:0:0.22</Duration>
+    <Duration x:Key="Duration.Slow">0:0:0.35</Duration>
+
+    <!-- Easing padrão (suave no início e fim) -->
+    <CubicEase x:Key="Ease.InOut" EasingMode="EaseInOut" />
+    <CubicEase x:Key="Ease.Out"   EasingMode="EaseOut" />
+    <CubicEase x:Key="Ease.In"    EasingMode="EaseIn" />
+
+    <!-- ── Fade In ───────────────────────────────────────────────────
+         Uso: BeginStoryboard Storyboard="{StaticResource Anim.FadeIn}"
+    ────────────────────────────────────────────────────────────────── -->
+    <Storyboard x:Key="Anim.FadeIn">
+        <DoubleAnimation
+            Storyboard.TargetProperty="Opacity"
+            From="0" To="1"
+            Duration="{StaticResource Duration.Normal}"
+            EasingFunction="{StaticResource Ease.Out}" />
+    </Storyboard>
+
+    <!-- ── Fade Out ──────────────────────────────────────────────────
+         Não remove o elemento — use com Visibility via trigger após completar.
+    ────────────────────────────────────────────────────────────────── -->
+    <Storyboard x:Key="Anim.FadeOut">
+        <DoubleAnimation
+            Storyboard.TargetProperty="Opacity"
+            From="1" To="0"
+            Duration="{StaticResource Duration.Normal}"
+            EasingFunction="{StaticResource Ease.In}" />
+    </Storyboard>
+
+    <!-- ── Slide Down (entrada do ProgressPanel) ─────────────────────
+         Anima MaxHeight de 0 → 200 para simular expansão vertical.
+    ────────────────────────────────────────────────────────────────── -->
+    <Storyboard x:Key="Anim.SlideDown">
+        <DoubleAnimation
+            Storyboard.TargetProperty="MaxHeight"
+            From="0" To="200"
+            Duration="{StaticResource Duration.Normal}"
+            EasingFunction="{StaticResource Ease.Out}" />
+        <DoubleAnimation
+            Storyboard.TargetProperty="Opacity"
+            From="0" To="1"
+            Duration="{StaticResource Duration.Normal}"
+            EasingFunction="{StaticResource Ease.Out}" />
+    </Storyboard>
+
+    <!-- ── Slide Up (recolhe ProgressPanel) ──────────────────────── -->
+    <Storyboard x:Key="Anim.SlideUp">
+        <DoubleAnimation
+            Storyboard.TargetProperty="MaxHeight"
+            From="200" To="0"
+            Duration="{StaticResource Duration.Normal}"
+            EasingFunction="{StaticResource Ease.In}" />
+        <DoubleAnimation
+            Storyboard.TargetProperty="Opacity"
+            From="1" To="0"
+            Duration="{StaticResource Duration.Normal}"
+            EasingFunction="{StaticResource Ease.In}" />
+    </Storyboard>
+
+    <!-- ── Pulse (ícone de processamento) ────────────────────────────
+         Escala levemente entre 1.0 e 1.15, vai e volta continuamente.
+         Aplicar em TextBlock com ícone ⏳ ou similar.
+    ────────────────────────────────────────────────────────────────── -->
+    <Storyboard x:Key="Anim.Pulse" RepeatBehavior="Forever" AutoReverse="True">
+        <DoubleAnimation
+            Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+            From="1.0" To="1.15"
+            Duration="{StaticResource Duration.Slow}"
+            EasingFunction="{StaticResource Ease.InOut}" />
+        <DoubleAnimation
+            Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+            From="1.0" To="1.15"
+            Duration="{StaticResource Duration.Slow}"
+            EasingFunction="{StaticResource Ease.InOut}" />
+    </Storyboard>
+
+    <!-- ── Flash de Sucesso (linha do DataGrid após compressão) ──────
+         Opacidade vai a 0.4 e volta a 1 uma única vez.
+    ────────────────────────────────────────────────────────────────── -->
+    <Storyboard x:Key="Anim.FlashSuccess">
+        <ColorAnimation
+            Storyboard.TargetProperty="(Panel.Background).(SolidColorBrush.Color)"
+            To="#3FB950"
+            Duration="0:0:0.08"
+            AutoReverse="True"
+            EasingFunction="{StaticResource Ease.Out}" />
+    </Storyboard>
+
+    <!-- ── Flash de Erro (linha do DataGrid em caso de falha) ────────-->
+    <Storyboard x:Key="Anim.FlashError">
+        <ColorAnimation
+            Storyboard.TargetProperty="(Panel.Background).(SolidColorBrush.Color)"
+            To="#F85149"
+            Duration="0:0:0.08"
+            AutoReverse="True"
+            EasingFunction="{StaticResource Ease.Out}" />
+    </Storyboard>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         ESTILOS COM ANIMAÇÕES EMBUTIDAS
+    ══════════════════════════════════════════════════════════════════ -->
+
+    <!--
+    ── Estilo para o ícone de progresso ⏳ (aplica Pulse quando Processing)
+       Uso: <TextBlock Style="{StaticResource Style.StatusIcon}" Text="{Binding ...}" />
+    -->
+    <Style x:Key="Style.StatusIcon" TargetType="TextBlock">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment"   Value="Center" />
+        <Setter Property="FontSize"            Value="14" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <ScaleTransform ScaleX="1" ScaleY="1" />
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <!-- Animação de pulso enquanto está processando -->
+            <DataTrigger Binding="{Binding Status}"
+                         Value="Processing">
+                <DataTrigger.EnterActions>
+                    <BeginStoryboard Name="PulseBegin"
+                                     Storyboard="{StaticResource Anim.Pulse}" />
+                </DataTrigger.EnterActions>
+                <DataTrigger.ExitActions>
+                    <StopStoryboard BeginStoryboardName="PulseBegin" />
+                </DataTrigger.ExitActions>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--
+    ── Estilo de linha do DataGrid com fade-in ao ser adicionada
+    -->
+    <Style x:Key="Style.DataGridRowFadeIn" TargetType="DataGridRow">
+        <Setter Property="Opacity" Value="0" />
+        <Style.Triggers>
+            <EventTrigger RoutedEvent="Loaded">
+                <BeginStoryboard Storyboard="{StaticResource Anim.FadeIn}" />
+            </EventTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--
+    ── Estilo para o ProgressPanel — expande/recolhe com animação
+       Aplique em um Border que envolva o ProgressPanel.
+       Controle via IsProcessing binding no ViewModel.
+    -->
+    <Style x:Key="Style.ProgressPanelHost" TargetType="Border">
+        <Setter Property="MaxHeight" Value="0" />
+        <Setter Property="Opacity"   Value="0" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding ProgressViewModel.IsPanelVisible}" Value="True">
+                <DataTrigger.EnterActions>
+                    <BeginStoryboard Storyboard="{StaticResource Anim.SlideDown}" />
+                </DataTrigger.EnterActions>
+                <DataTrigger.ExitActions>
+                    <BeginStoryboard Storyboard="{StaticResource Anim.SlideUp}" />
+                </DataTrigger.ExitActions>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--
+    ── Estilo da DropZone — borda pulsante quando IsDragOver = True
+    -->
+    <Style x:Key="Style.DropZoneBorder" TargetType="Border">
+        <Setter Property="BorderThickness" Value="2" />
+        <Setter Property="CornerRadius"    Value="8" />
+        <Setter Property="BorderBrush"     Value="{StaticResource Brush.Border.Default}" />
+        <Setter Property="Background"      Value="{StaticResource Brush.Background.Surface}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsDragOver}" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource Brush.Accent.Primary}" />
+                <Setter Property="Background"  Value="{StaticResource Brush.Background.Hover}" />
+                <DataTrigger.EnterActions>
+                    <BeginStoryboard>
+                        <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                            <ThicknessAnimation
+                                Storyboard.TargetProperty="BorderThickness"
+                                From="2" To="3"
+                                Duration="0:0:0.5"
+                                EasingFunction="{StaticResource Ease.InOut}" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </DataTrigger.EnterActions>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--
+    ── ProgressBar animado com shimmer durante processamento
+       Aplique em ProgressBar com IsIndeterminate para carga indeterminada.
+    -->
+    <Style x:Key="Style.ProgressBarShimmer"
+           TargetType="ProgressBar"
+           BasedOn="{StaticResource ProgressBar.Accent}">
+        <Style.Triggers>
+            <Trigger Property="IsIndeterminate" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource Brush.Status.Processing}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+</ResourceDictionary>

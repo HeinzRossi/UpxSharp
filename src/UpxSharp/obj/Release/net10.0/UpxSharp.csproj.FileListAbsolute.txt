@@ -1,0 +1,12 @@
+C:\Projetos\UpxSharp\src\UpxSharp\bin\Release\net10.0\UpxSharp.deps.json
+C:\Projetos\UpxSharp\src\UpxSharp\bin\Release\net10.0\UpxSharp.dll
+C:\Projetos\UpxSharp\src\UpxSharp\bin\Release\net10.0\UpxSharp.pdb
+C:\Projetos\UpxSharp\src\UpxSharp\obj\Release\net10.0\UpxSharp.csproj.AssemblyReference.cache
+C:\Projetos\UpxSharp\src\UpxSharp\obj\Release\net10.0\UpxSharp.GeneratedMSBuildEditorConfig.editorconfig
+C:\Projetos\UpxSharp\src\UpxSharp\obj\Release\net10.0\UpxSharp.AssemblyInfoInputs.cache
+C:\Projetos\UpxSharp\src\UpxSharp\obj\Release\net10.0\UpxSharp.AssemblyInfo.cs
+C:\Projetos\UpxSharp\src\UpxSharp\obj\Release\net10.0\UpxSharp.csproj.CoreCompileInputs.cache
+C:\Projetos\UpxSharp\src\UpxSharp\obj\Release\net10.0\UpxSharp.dll
+C:\Projetos\UpxSharp\src\UpxSharp\obj\Release\net10.0\refint\UpxSharp.dll
+C:\Projetos\UpxSharp\src\UpxSharp\obj\Release\net10.0\UpxSharp.pdb
+C:\Projetos\UpxSharp\src\UpxSharp\obj\Release\net10.0\ref\UpxSharp.dll

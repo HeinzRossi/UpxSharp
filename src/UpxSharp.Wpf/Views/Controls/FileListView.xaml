@@ -1,0 +1,144 @@
+<UserControl x:Class="UpxSharp.Wpf.Views.Controls.FileListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <DataGrid x:Name="FileGrid"
+              ItemsSource="{Binding Files}"
+              AutoGenerateColumns="False"
+              SelectionMode="Extended"
+              CanUserAddRows="False"
+              CanUserDeleteRows="False"
+              GridLinesVisibility="Horizontal"
+              HeadersVisibility="Column"
+              Background="{StaticResource Brush.Background.Deep}"
+              RowBackground="{StaticResource Brush.Background.Deep}"
+              AlternatingRowBackground="{StaticResource Brush.Background.Surface}"
+              BorderThickness="0"
+              Foreground="{StaticResource Brush.Text.Primary}"
+              FontSize="{StaticResource FontSize.MD}"
+              RowHeight="36"
+              MouseDoubleClick="FileGrid_MouseDoubleClick"
+              ContextMenuOpening="FileGrid_ContextMenuOpening">
+
+        <DataGrid.ContextMenu>
+            <ContextMenu>
+                <MenuItem x:Name="MenuItemOpenFolder" Header="Abrir pasta"
+                          Click="MenuItemOpenFolder_Click" />
+                <MenuItem x:Name="MenuItemCopyPath" Header="Copiar caminho"
+                          Click="MenuItemCopyPath_Click" />
+                <Separator />
+                <MenuItem x:Name="MenuItemRemove" Header="Remover seleção"
+                          InputGestureText="Delete" Click="MenuItemRemove_Click" />
+                <MenuItem x:Name="MenuItemRemoveAll" Header="Limpar lista"
+                          Click="MenuItemRemoveAll_Click" />
+            </ContextMenu>
+        </DataGrid.ContextMenu>
+
+        <DataGrid.Columns>
+
+            <!-- Ícone de status -->
+            <DataGridTemplateColumn Width="40" CanUserSort="False">
+                <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <TextBlock
+                            Text="{Binding Status, Converter={StaticResource StatusToIconConverter}}"
+                            Foreground="{Binding Status, Converter={StaticResource StatusToColorConverter}}"
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                            FontSize="14" />
+                    </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- Nome do arquivo -->
+            <DataGridTextColumn Header="Arquivo"
+                                Binding="{Binding FileName}"
+                                Width="*" IsReadOnly="True" />
+
+            <!-- Tamanho original -->
+            <DataGridTextColumn Header="Tamanho"
+                                Binding="{Binding OriginalSizeFormatted}"
+                                Width="90" IsReadOnly="True">
+                <DataGridTextColumn.ElementStyle>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Secondary}" />
+                        <Setter Property="HorizontalAlignment" Value="Right" />
+                        <Setter Property="Margin" Value="0,0,8,0" />
+                    </Style>
+                </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <!-- Tamanho comprimido -->
+            <DataGridTextColumn Header="Comprimido"
+                                Binding="{Binding CompressedSizeFormatted}"
+                                Width="100" IsReadOnly="True">
+                <DataGridTextColumn.ElementStyle>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="HorizontalAlignment" Value="Right" />
+                        <Setter Property="Margin" Value="0,0,8,0" />
+                    </Style>
+                </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+
+            <!-- Redução percentual -->
+            <DataGridTemplateColumn Header="Redução" Width="90">
+                <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding RatioFormatted}"
+                                   Foreground="{StaticResource Brush.Status.Success}"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,8,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Status}" Value="Error">
+                                            <Setter Property="Foreground"
+                                                    Value="{StaticResource Brush.Status.Error}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- Progresso inline (visível só durante processamento) -->
+            <DataGridTemplateColumn Header="" Width="120">
+                <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <ProgressBar Style="{StaticResource ProgressBar.Accent}"
+                                     Value="{Binding Progress}" Maximum="100"
+                                     VerticalAlignment="Center">
+                        </ProgressBar>
+                    </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+            <!-- Botão remover item -->
+            <DataGridTemplateColumn Width="36" CanUserSort="False">
+                <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <Button Content="✕" Width="28" Height="24"
+                                Command="{Binding DataContext.RemoveFileCommand,
+                                    RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                CommandParameter="{Binding}"
+                                ToolTip="Remover arquivo (Delete)"
+                                Padding="0" FontSize="10" Opacity="0.4">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Opacity" Value="1" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+
+        </DataGrid.Columns>
+    </DataGrid>
+</UserControl>

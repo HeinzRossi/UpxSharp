@@ -1,0 +1,70 @@
+<UserControl x:Class="UpxSharp.Wpf.Views.Controls.ProgressPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:b="clr-namespace:UpxSharp.Wpf.Behaviors">
+
+    <Border Background="{StaticResource Brush.Background.Elevated}"
+            BorderBrush="{StaticResource Brush.Border.Subtle}"
+            BorderThickness="0,1,0,0" MaxHeight="200">
+        <Grid Margin="12,8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" MinHeight="60" />
+            </Grid.RowDefinitions>
+
+            <!-- Barra de progresso do arquivo atual -->
+            <Grid Grid.Row="0" Margin="0,0,0,8"
+                  Visibility="{Binding IsProcessing,
+                      Converter={StaticResource BoolToVisibilityConverter}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Margin="0,0,0,4">
+                    <TextBlock Text="{Binding CurrentFileName}"
+                               Style="{StaticResource Text.Body}" FontWeight="Medium" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="{Binding ProgressPercent, StringFormat={}{0:F0}%}"
+                                   Style="{StaticResource Text.Label}" Margin="0,0,12,0" />
+                        <TextBlock Text="{Binding Speed}" Style="{StaticResource Text.Label}" />
+                        <Button Content="Cancelar"
+                                Style="{StaticResource Button.Ghost}"
+                                Command="{Binding DataContext.CancelProcessingCommand,
+                                    RelativeSource={RelativeSource AncestorType=Window}}"
+                                ToolTip="Cancelar processamento (Esc)"
+                                Padding="10,3" Margin="12,0,0,0" />
+                    </StackPanel>
+                </Grid>
+
+                <ProgressBar Grid.Row="1"
+                             Style="{StaticResource ProgressBar.Accent}"
+                             Value="{Binding ProgressPercent}" Maximum="100" />
+            </Grid>
+
+            <!-- Log -->
+            <ScrollViewer x:Name="LogScrollViewer"
+                          Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                          b:AutoScrollBehavior.IsEnabled="True">
+                <ScrollViewer.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Copiar log" InputGestureText="Ctrl+C"
+                                  Click="MenuItemCopyLog_Click" />
+                        <MenuItem Header="Limpar log" InputGestureText="Ctrl+L"
+                                  Click="MenuItemClearLog_Click" />
+                    </ContextMenu>
+                </ScrollViewer.ContextMenu>
+                <ItemsControl ItemsSource="{Binding LogEntries}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Message}"
+                                       Style="{StaticResource Text.Mono}"
+                                       Margin="0,1" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+        </Grid>
+    </Border>
+</UserControl>

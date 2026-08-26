@@ -1,0 +1,14 @@
+C:\Projetos\UpxSharp\src\UpxSharp.Shell\bin\Debug\net10.0-windows\UpxSharp.Shell.comhost.dll
+C:\Projetos\UpxSharp\src\UpxSharp.Shell\bin\Debug\net10.0-windows\UpxSharp.Shell.deps.json
+C:\Projetos\UpxSharp\src\UpxSharp.Shell\bin\Debug\net10.0-windows\UpxSharp.Shell.runtimeconfig.json
+C:\Projetos\UpxSharp\src\UpxSharp.Shell\bin\Debug\net10.0-windows\UpxSharp.Shell.dll
+C:\Projetos\UpxSharp\src\UpxSharp.Shell\bin\Debug\net10.0-windows\UpxSharp.Shell.pdb
+C:\Projetos\UpxSharp\src\UpxSharp.Shell\obj\Debug\net10.0-windows\UpxSharp.Shell.GeneratedMSBuildEditorConfig.editorconfig
+C:\Projetos\UpxSharp\src\UpxSharp.Shell\obj\Debug\net10.0-windows\UpxSharp.Shell.AssemblyInfoInputs.cache
+C:\Projetos\UpxSharp\src\UpxSharp.Shell\obj\Debug\net10.0-windows\UpxSharp.Shell.AssemblyInfo.cs
+C:\Projetos\UpxSharp\src\UpxSharp.Shell\obj\Debug\net10.0-windows\UpxSharp.Shell.csproj.CoreCompileInputs.cache
+C:\Projetos\UpxSharp\src\UpxSharp.Shell\obj\Debug\net10.0-windows\UpxSharp.Shell.dll
+C:\Projetos\UpxSharp\src\UpxSharp.Shell\obj\Debug\net10.0-windows\refint\UpxSharp.Shell.dll
+C:\Projetos\UpxSharp\src\UpxSharp.Shell\obj\Debug\net10.0-windows\UpxSharp.Shell.pdb
+C:\Projetos\UpxSharp\src\UpxSharp.Shell\obj\Debug\net10.0-windows\UpxSharp.Shell.genruntimeconfig.cache
+C:\Projetos\UpxSharp\src\UpxSharp.Shell\obj\Debug\net10.0-windows\ref\UpxSharp.Shell.dll

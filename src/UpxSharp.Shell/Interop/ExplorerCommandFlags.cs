@@ -1,0 +1,19 @@
+using System;
+
+namespace UpxSharp.Shell.Interop;
+
+[Flags]
+public enum ExplorerCommandFlags : uint
+{
+    ECF_DEFAULT = 0x0000,
+    ECF_HASSUBCOMMANDS = 0x0001,
+    ECF_HASSPLITBUTTON = 0x0002,
+    ECF_HIDELABEL = 0x0004,
+    ECF_ISSEPARATOR = 0x0008,
+    ECF_HASLUASHIELD = 0x0010,
+    ECF_SEPARATORBEFORE = 0x0020,
+    ECF_SEPARATORAFTER = 0x0040,
+    ECF_ISDROPDOWN = 0x0080,
+    ECF_TOGGLEABLE = 0x0100,
+    ECF_AUTOMENUICONS = 0x0200,
+}

@@ -1,0 +1,54 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.6.11828.311
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UpxSharp", "src\UpxSharp\UpxSharp.csproj", "{9B14FE13-8F2A-4A7D-B1BE-C4CF5336D5EF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UpxSharp.Cli", "src\UpxSharp.Cli\UpxSharp.Cli.csproj", "{9B14FE13-8F2A-4A7D-B1BE-C4CF5336D5F0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UpxSharp.Shell", "src\UpxSharp.Shell\UpxSharp.Shell.csproj", "{9B14FE13-8F2A-4A7D-B1BE-C4CF5336D5F1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UpxSharp.Wpf", "src\UpxSharp.Wpf\UpxSharp.Wpf.csproj", "{B0AC8596-D976-48DB-AD6F-8262250D9777}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UpxSharp.Wpf.Tests", "tests\UpxSharp.Wpf.Tests\UpxSharp.Wpf.Tests.csproj", "{8CF103EF-67BC-4DF3-BD07-2AE73182C927}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UpxSharp.Shell.Tests", "tests\UpxSharp.Shell.Tests\UpxSharp.Shell.Tests.csproj", "{41F95E55-A961-4609-8C6F-2D063A1773F1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9B14FE13-8F2A-4A7D-B1BE-C4CF5336D5EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B14FE13-8F2A-4A7D-B1BE-C4CF5336D5EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B14FE13-8F2A-4A7D-B1BE-C4CF5336D5EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B14FE13-8F2A-4A7D-B1BE-C4CF5336D5EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B14FE13-8F2A-4A7D-B1BE-C4CF5336D5F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B14FE13-8F2A-4A7D-B1BE-C4CF5336D5F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B14FE13-8F2A-4A7D-B1BE-C4CF5336D5F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B14FE13-8F2A-4A7D-B1BE-C4CF5336D5F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B14FE13-8F2A-4A7D-B1BE-C4CF5336D5F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B14FE13-8F2A-4A7D-B1BE-C4CF5336D5F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B14FE13-8F2A-4A7D-B1BE-C4CF5336D5F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B14FE13-8F2A-4A7D-B1BE-C4CF5336D5F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0AC8596-D976-48DB-AD6F-8262250D9777}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0AC8596-D976-48DB-AD6F-8262250D9777}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0AC8596-D976-48DB-AD6F-8262250D9777}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0AC8596-D976-48DB-AD6F-8262250D9777}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8CF103EF-67BC-4DF3-BD07-2AE73182C927}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8CF103EF-67BC-4DF3-BD07-2AE73182C927}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8CF103EF-67BC-4DF3-BD07-2AE73182C927}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8CF103EF-67BC-4DF3-BD07-2AE73182C927}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41F95E55-A961-4609-8C6F-2D063A1773F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41F95E55-A961-4609-8C6F-2D063A1773F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41F95E55-A961-4609-8C6F-2D063A1773F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41F95E55-A961-4609-8C6F-2D063A1773F1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A4E01C54-225E-4CFB-99A9-A24DB13CFD0E}
+	EndGlobalSection
+EndGlobal
