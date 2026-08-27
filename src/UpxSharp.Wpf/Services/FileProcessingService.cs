@@ -11,6 +11,16 @@ namespace UpxSharp.Wpf.Services;
 
 public sealed class FileProcessingService : IFileProcessingService
 {
+    private readonly Action<string> _notifyPathChanged;
+
+    public FileProcessingService()
+        : this(NotifyPathChanged)
+    {
+    }
+
+    public FileProcessingService(Action<string> notifyPathChanged)
+        => _notifyPathChanged = notifyPathChanged;
+
     public async Task ProcessAsync(
         IEnumerable<FileItemViewModel> files,
         FileProcessingRequest request,
@@ -39,23 +49,31 @@ public sealed class FileProcessingService : IFileProcessingService
 
             try
             {
+                void ReportCurrentProgress(double currentPercent)
+                    => ReportProgress(file, currentPercent, fileIndex, fileList.Count, onProgress, onOverallProgress);
+
                 ProcessingResult result = await Task.Run(() =>
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    ReportProgress(file, 15, fileIndex, fileList.Count, onProgress, onOverallProgress);
+                    ReportCurrentProgress(10);
 
                     if (request.Options.Command == UpxCommand.Test)
-                        return TestRoundTrip(file.FilePath, request.Options, file, onProgress, cancellationToken);
+                        return TestRoundTrip(file.FilePath, request.Options, ReportCurrentProgress, cancellationToken);
 
                     string outputPath = ResolveOutputPath(file.FilePath, request);
                     bool replaceOriginal = request.OutputMode == FileOutputMode.ReplaceOriginal;
                     partialOutputPath = CreateTemporaryPathBeside(outputPath);
 
-                    ReportProgress(file, 35, fileIndex, fileList.Count, onProgress, onOverallProgress);
-                    ProcessFile(
-                        file.FilePath,
-                        partialOutputPath,
-                        request.Options,
+                    ReportCurrentProgress(25);
+                    RunWithEstimatedProgress(
+                        () => ProcessFile(
+                            file.FilePath,
+                            partialOutputPath,
+                            request.Options,
+                            cancellationToken),
+                        ReportCurrentProgress,
+                        35,
+                        85,
                         cancellationToken);
 
                     RejectGrownCompressedOutput(
@@ -64,10 +82,13 @@ public sealed class FileProcessingService : IFileProcessingService
                         request.Options);
 
                     cancellationToken.ThrowIfCancellationRequested();
-                    ReportProgress(file, 90, fileIndex, fileList.Count, onProgress, onOverallProgress);
+                    ReportCurrentProgress(88);
+
+                    string? backupPath = request.Options.KeepBackup ? file.FilePath + ".bak" : null;
 
                     if (replaceOriginal)
                     {
+                        ReportCurrentProgress(request.Options.KeepBackup ? 91 : 94);
                         ReplaceOriginalSafely(
                             partialOutputPath,
                             file.FilePath,
@@ -78,11 +99,19 @@ public sealed class FileProcessingService : IFileProcessingService
                     else
                     {
                         if (request.Options.KeepBackup)
+                        {
                             CreateBackupCopy(file.FilePath);
+                            ReportCurrentProgress(92);
+                        }
 
+                        ReportCurrentProgress(96);
                         File.Move(partialOutputPath, outputPath, overwrite: true);
                         partialOutputPath = null;
                     }
+
+                    ReportCurrentProgress(98);
+                    NotifyProcessedPaths(file.FilePath, outputPath, backupPath);
+                    ReportCurrentProgress(99);
 
                     return new ProcessingResult(outputPath, new FileInfo(outputPath).Length);
                 }, cancellationToken);
@@ -90,7 +119,7 @@ public sealed class FileProcessingService : IFileProcessingService
                 stopwatch.Stop();
                 file.CompressedSize = result.ResultSize;
                 file.Status = FileProcessingStatus.Done;
-                ReportProgress(file, 100, fileIndex, fileList.Count, onProgress, onOverallProgress);
+                ReportCurrentProgress(100);
 
                 string action = request.Options.Command switch
                 {
@@ -156,8 +185,7 @@ public sealed class FileProcessingService : IFileProcessingService
     private static ProcessingResult TestRoundTrip(
         string inputPath,
         Options options,
-        FileItemViewModel file,
-        Action<FileItemViewModel, double> onProgress,
+        Action<double> reportProgress,
         CancellationToken cancellationToken)
     {
         string packedPath = Path.Combine(
@@ -168,19 +196,30 @@ public sealed class FileProcessingService : IFileProcessingService
         try
         {
             var packOptions = CopyOptions(options, UpxCommand.Compress);
-            ProcessFile(inputPath, packedPath, packOptions, cancellationToken);
+            RunWithEstimatedProgress(
+                () => ProcessFile(inputPath, packedPath, packOptions, cancellationToken),
+                reportProgress,
+                20,
+                52,
+                cancellationToken);
             long packedSize = new FileInfo(packedPath).Length;
-            onProgress(file, 55);
+            reportProgress(55);
 
             var unpackOptions = CopyOptions(options, UpxCommand.Decompress);
-            ProcessFile(packedPath, unpackedPath, unpackOptions, cancellationToken);
-            onProgress(file, 85);
+            RunWithEstimatedProgress(
+                () => ProcessFile(packedPath, unpackedPath, unpackOptions, cancellationToken),
+                reportProgress,
+                58,
+                85,
+                cancellationToken);
+            reportProgress(88);
 
             cancellationToken.ThrowIfCancellationRequested();
             if (!FilesAreEqual(inputPath, unpackedPath))
                 throw new CorruptedPackException(
                     "Teste falhou: arquivo restaurado difere do original.");
 
+            reportProgress(98);
             return new ProcessingResult("Teste concluído sem criar saída", packedSize);
         }
         finally
@@ -216,6 +255,56 @@ public sealed class FileProcessingService : IFileProcessingService
 
         output.Flush();
         cancellationToken.ThrowIfCancellationRequested();
+    }
+
+    private static void RunWithEstimatedProgress(
+        Action action,
+        Action<double> reportProgress,
+        double startPercent,
+        double endPercent,
+        CancellationToken cancellationToken)
+    {
+        using var finished = new ManualResetEventSlim();
+        Exception? pumpException = null;
+
+        reportProgress(startPercent);
+        reportProgress(Math.Min(startPercent + 5, endPercent));
+
+        Task pump = Task.Run(() =>
+        {
+            try
+            {
+                double current = Math.Min(startPercent + 8, endPercent);
+                while (!finished.Wait(150))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    reportProgress(current);
+                    double remaining = endPercent - current;
+                    if (remaining > 1)
+                        current += Math.Max(0.5, remaining * 0.2);
+                }
+            }
+            catch (Exception ex)
+            {
+                pumpException = ex;
+            }
+        }, CancellationToken.None);
+
+        try
+        {
+            action();
+        }
+        finally
+        {
+            finished.Set();
+            pump.GetAwaiter().GetResult();
+        }
+
+        if (pumpException is not null)
+            throw pumpException;
+
+        cancellationToken.ThrowIfCancellationRequested();
+        reportProgress(endPercent);
     }
 
     private static bool TryProcessWithOfficialUpx(
@@ -316,6 +405,13 @@ public sealed class FileProcessingService : IFileProcessingService
     private static extern bool GetBinaryType(
         string lpApplicationName,
         out uint lpBinaryType);
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    private static extern void SHChangeNotify(
+        uint wEventId,
+        uint uFlags,
+        string? dwItem1,
+        string? dwItem2);
 
     private static bool IsWindowsPe(string path)
     {
@@ -440,6 +536,37 @@ public sealed class FileProcessingService : IFileProcessingService
         return Path.Combine(directory, $".{fileName}.{Guid.NewGuid():N}.tmp");
     }
 
+    private void NotifyProcessedPaths(string originalPath, string outputPath, string? backupPath)
+    {
+        NotifyPathBestEffort(originalPath);
+        NotifyPathBestEffort(outputPath);
+
+        if (!string.IsNullOrWhiteSpace(backupPath))
+            NotifyPathBestEffort(backupPath);
+
+        string? originalDirectory = Path.GetDirectoryName(originalPath);
+        string? outputDirectory = Path.GetDirectoryName(outputPath);
+        if (!string.IsNullOrWhiteSpace(originalDirectory))
+            NotifyPathBestEffort(originalDirectory);
+        if (!string.IsNullOrWhiteSpace(outputDirectory) &&
+            !string.Equals(originalDirectory, outputDirectory, StringComparison.OrdinalIgnoreCase))
+        {
+            NotifyPathBestEffort(outputDirectory);
+        }
+    }
+
+    private void NotifyPathBestEffort(string path)
+    {
+        try
+        {
+            _notifyPathChanged(path);
+        }
+        catch
+        {
+            // Explorer refresh is best-effort and must not fail processing.
+        }
+    }
+
     private static void ReplaceOriginalSafely(
         string temporaryPath,
         string originalPath,
@@ -552,6 +679,17 @@ public sealed class FileProcessingService : IFileProcessingService
         {
             // Limpeza de melhor esforço; erro original deve ser preservado.
         }
+    }
+
+    private static void NotifyPathChanged(string path)
+    {
+        const uint shcneUpdateItem = 0x00002000;
+        const uint shcneUpdateDir = 0x00001000;
+        const uint shcnfPathW = 0x0005;
+        const uint shcnfFlushNowait = 0x2000;
+
+        uint eventId = Directory.Exists(path) ? shcneUpdateDir : shcneUpdateItem;
+        SHChangeNotify(eventId, shcnfPathW | shcnfFlushNowait, path, null);
     }
 
     private sealed record ProcessingResult(string OutputPath, long ResultSize);
