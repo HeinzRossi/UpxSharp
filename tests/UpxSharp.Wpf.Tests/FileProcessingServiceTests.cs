@@ -137,9 +137,9 @@ public sealed class FileProcessingServiceTests
         string inputPath = directory.CreateFile("sample.exe", CreateSyntheticPe(0x014C));
         string outputPath = Path.Combine(directory.Path, "sample.upx");
         string backupPath = inputPath + ".bak";
-        var notifiedPaths = new List<string>();
+        var notifications = new List<ShellChangeNotification>();
 
-        var service = new FileProcessingService(notifiedPaths.Add);
+        var service = new FileProcessingService(notifications.Add);
         await service.ProcessAsync(
             [CreateFileItem(inputPath)],
             CreateRequest(
@@ -152,10 +152,18 @@ public sealed class FileProcessingServiceTests
             (_, _) => { },
             CancellationToken.None);
 
-        Assert.Contains(inputPath, notifiedPaths);
-        Assert.Contains(outputPath, notifiedPaths);
-        Assert.Contains(backupPath, notifiedPaths);
-        Assert.Contains(directory.Path, notifiedPaths);
+        Assert.Contains(notifications, notification =>
+            notification.Path == inputPath && notification.Event == ShellChangeEvent.UpdateItem);
+        Assert.Contains(notifications, notification =>
+            notification.Path == inputPath && notification.Event == ShellChangeEvent.Attributes);
+        Assert.Contains(notifications, notification =>
+            notification.Path == outputPath && notification.Event == ShellChangeEvent.UpdateItem);
+        Assert.Contains(notifications, notification =>
+            notification.Path == backupPath && notification.Event == ShellChangeEvent.UpdateItem);
+        Assert.Contains(notifications, notification =>
+            notification.Path == directory.Path && notification.Event == ShellChangeEvent.UpdateDir);
+        Assert.Contains(notifications, notification =>
+            notification.Path is null && notification.Event == ShellChangeEvent.AssociationChanged);
     }
 
     [Fact]
@@ -279,8 +287,8 @@ public sealed class FileProcessingServiceTests
     {
         using var directory = new TempDirectory();
         string inputPath = directory.CreateFile("sample.com", CreateDosCom());
-        var notifiedPaths = new List<string>();
-        var service = new FileProcessingService(notifiedPaths.Add);
+        var notifications = new List<ShellChangeNotification>();
+        var service = new FileProcessingService(notifications.Add);
 
         await service.ProcessAsync(
             [CreateFileItem(inputPath)],
@@ -290,7 +298,7 @@ public sealed class FileProcessingServiceTests
             (_, _) => { },
             CancellationToken.None);
 
-        Assert.Empty(notifiedPaths);
+        Assert.Empty(notifications);
     }
 
     [Fact]

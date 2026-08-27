@@ -11,15 +11,15 @@ namespace UpxSharp.Wpf.Services;
 
 public sealed class FileProcessingService : IFileProcessingService
 {
-    private readonly Action<string> _notifyPathChanged;
+    private readonly Action<ShellChangeNotification> _notifyShellChanged;
 
     public FileProcessingService()
-        : this(NotifyPathChanged)
+        : this(NotifyShellChanged)
     {
     }
 
-    public FileProcessingService(Action<string> notifyPathChanged)
-        => _notifyPathChanged = notifyPathChanged;
+    public FileProcessingService(Action<ShellChangeNotification> notifyShellChanged)
+        => _notifyShellChanged = notifyShellChanged;
 
     public async Task ProcessAsync(
         IEnumerable<FileItemViewModel> files,
@@ -73,7 +73,7 @@ public sealed class FileProcessingService : IFileProcessingService
                             cancellationToken),
                         ReportCurrentProgress,
                         35,
-                        85,
+                        84,
                         cancellationToken);
 
                     RejectGrownCompressedOutput(
@@ -82,34 +82,37 @@ public sealed class FileProcessingService : IFileProcessingService
                         request.Options);
 
                     cancellationToken.ThrowIfCancellationRequested();
-                    ReportCurrentProgress(88);
+                    ReportCurrentProgress(85);
 
                     string? backupPath = request.Options.KeepBackup ? file.FilePath + ".bak" : null;
 
                     if (replaceOriginal)
                     {
-                        ReportCurrentProgress(request.Options.KeepBackup ? 91 : 94);
+                        ReportCurrentProgress(request.Options.KeepBackup ? 88 : 92);
                         ReplaceOriginalSafely(
                             partialOutputPath,
                             file.FilePath,
                             request.Options.KeepBackup);
                         partialOutputPath = null;
                         outputPath = file.FilePath;
+                        ReportCurrentProgress(95);
                     }
                     else
                     {
                         if (request.Options.KeepBackup)
                         {
                             CreateBackupCopy(file.FilePath);
-                            ReportCurrentProgress(92);
+                            ReportCurrentProgress(90);
                         }
 
-                        ReportCurrentProgress(96);
+                        ReportCurrentProgress(93);
                         File.Move(partialOutputPath, outputPath, overwrite: true);
                         partialOutputPath = null;
+                        ReportCurrentProgress(95);
                     }
 
-                    ReportCurrentProgress(98);
+                    RefreshFileSystemMetadata(file.FilePath, outputPath, backupPath);
+                    ReportCurrentProgress(96);
                     NotifyProcessedPaths(file.FilePath, outputPath, backupPath);
                     ReportCurrentProgress(99);
 
@@ -119,7 +122,6 @@ public sealed class FileProcessingService : IFileProcessingService
                 stopwatch.Stop();
                 file.CompressedSize = result.ResultSize;
                 file.Status = FileProcessingStatus.Done;
-                ReportCurrentProgress(100);
 
                 string action = request.Options.Command switch
                 {
@@ -133,6 +135,8 @@ public sealed class FileProcessingService : IFileProcessingService
                     $"{file.CompressedSizeFormatted} ({file.RatioFormatted}) em " +
                     $"{stopwatch.Elapsed.TotalSeconds:F1}s. Saída: {result.OutputPath}",
                     LogLevel.Success);
+
+                ReportCurrentProgress(100);
             }
             catch (OperationCanceledException)
             {
@@ -200,26 +204,26 @@ public sealed class FileProcessingService : IFileProcessingService
                 () => ProcessFile(inputPath, packedPath, packOptions, cancellationToken),
                 reportProgress,
                 20,
-                52,
+                50,
                 cancellationToken);
             long packedSize = new FileInfo(packedPath).Length;
-            reportProgress(55);
+            reportProgress(52);
 
             var unpackOptions = CopyOptions(options, UpxCommand.Decompress);
             RunWithEstimatedProgress(
                 () => ProcessFile(packedPath, unpackedPath, unpackOptions, cancellationToken),
                 reportProgress,
                 58,
-                85,
+                84,
                 cancellationToken);
-            reportProgress(88);
+            reportProgress(86);
 
             cancellationToken.ThrowIfCancellationRequested();
             if (!FilesAreEqual(inputPath, unpackedPath))
                 throw new CorruptedPackException(
                     "Teste falhou: arquivo restaurado difere do original.");
 
-            reportProgress(98);
+            reportProgress(99);
             return new ProcessingResult("Teste concluído sem criar saída", packedSize);
         }
         finally
@@ -538,32 +542,85 @@ public sealed class FileProcessingService : IFileProcessingService
 
     private void NotifyProcessedPaths(string originalPath, string outputPath, string? backupPath)
     {
-        NotifyPathBestEffort(originalPath);
-        NotifyPathBestEffort(outputPath);
+        NotifyFileChangedBestEffort(originalPath);
+        NotifyFileChangedBestEffort(outputPath);
 
         if (!string.IsNullOrWhiteSpace(backupPath))
-            NotifyPathBestEffort(backupPath);
+            NotifyFileChangedBestEffort(backupPath);
 
         string? originalDirectory = Path.GetDirectoryName(originalPath);
         string? outputDirectory = Path.GetDirectoryName(outputPath);
         if (!string.IsNullOrWhiteSpace(originalDirectory))
-            NotifyPathBestEffort(originalDirectory);
+            NotifyDirectoryChangedBestEffort(originalDirectory);
         if (!string.IsNullOrWhiteSpace(outputDirectory) &&
             !string.Equals(originalDirectory, outputDirectory, StringComparison.OrdinalIgnoreCase))
         {
-            NotifyPathBestEffort(outputDirectory);
+            NotifyDirectoryChangedBestEffort(outputDirectory);
         }
+
+        NotifyShellChangedBestEffort(new ShellChangeNotification(
+            null,
+            ShellChangeEvent.AssociationChanged));
     }
 
-    private void NotifyPathBestEffort(string path)
+    private void NotifyFileChangedBestEffort(string path)
+    {
+        NotifyShellChangedBestEffort(new ShellChangeNotification(
+            path,
+            ShellChangeEvent.UpdateItem));
+        NotifyShellChangedBestEffort(new ShellChangeNotification(
+            path,
+            ShellChangeEvent.Attributes));
+    }
+
+    private void NotifyDirectoryChangedBestEffort(string path)
+        => NotifyShellChangedBestEffort(new ShellChangeNotification(
+            path,
+            ShellChangeEvent.UpdateDir));
+
+    private void NotifyShellChangedBestEffort(ShellChangeNotification notification)
     {
         try
         {
-            _notifyPathChanged(path);
+            _notifyShellChanged(notification);
         }
         catch
         {
             // Explorer refresh is best-effort and must not fail processing.
+        }
+    }
+
+    private static void RefreshFileSystemMetadata(string originalPath, string outputPath, string? backupPath)
+    {
+        RefreshPathBestEffort(originalPath);
+        RefreshPathBestEffort(outputPath);
+
+        if (!string.IsNullOrWhiteSpace(backupPath))
+            RefreshPathBestEffort(backupPath);
+
+        string? originalDirectory = Path.GetDirectoryName(originalPath);
+        string? outputDirectory = Path.GetDirectoryName(outputPath);
+        if (!string.IsNullOrWhiteSpace(originalDirectory))
+            RefreshPathBestEffort(originalDirectory);
+        if (!string.IsNullOrWhiteSpace(outputDirectory) &&
+            !string.Equals(originalDirectory, outputDirectory, StringComparison.OrdinalIgnoreCase))
+        {
+            RefreshPathBestEffort(outputDirectory);
+        }
+    }
+
+    private static void RefreshPathBestEffort(string path)
+    {
+        try
+        {
+            if (Directory.Exists(path))
+                new DirectoryInfo(path).Refresh();
+            else
+                new FileInfo(path).Refresh();
+        }
+        catch
+        {
+            // Metadata refresh is best-effort before Explorer notification.
         }
     }
 
@@ -681,16 +738,41 @@ public sealed class FileProcessingService : IFileProcessingService
         }
     }
 
-    private static void NotifyPathChanged(string path)
+    private static void NotifyShellChanged(ShellChangeNotification notification)
     {
         const uint shcneUpdateItem = 0x00002000;
         const uint shcneUpdateDir = 0x00001000;
+        const uint shcneAttributes = 0x00000800;
+        const uint shcneAssocChanged = 0x08000000;
         const uint shcnfPathW = 0x0005;
-        const uint shcnfFlushNowait = 0x2000;
+        const uint shcnfIdList = 0x0000;
+        const uint shcnfFlush = 0x1000;
 
-        uint eventId = Directory.Exists(path) ? shcneUpdateDir : shcneUpdateItem;
-        SHChangeNotify(eventId, shcnfPathW | shcnfFlushNowait, path, null);
+        uint eventId = notification.Event switch
+        {
+            ShellChangeEvent.UpdateItem => shcneUpdateItem,
+            ShellChangeEvent.UpdateDir => shcneUpdateDir,
+            ShellChangeEvent.Attributes => shcneAttributes,
+            ShellChangeEvent.AssociationChanged => shcneAssocChanged,
+            _ => shcneUpdateItem,
+        };
+
+        uint flags = notification.Path is null
+            ? shcnfIdList | shcnfFlush
+            : shcnfPathW | shcnfFlush;
+
+        SHChangeNotify(eventId, flags, notification.Path, null);
     }
 
     private sealed record ProcessingResult(string OutputPath, long ResultSize);
+}
+
+public sealed record ShellChangeNotification(string? Path, ShellChangeEvent Event);
+
+public enum ShellChangeEvent
+{
+    UpdateItem,
+    Attributes,
+    UpdateDir,
+    AssociationChanged,
 }
