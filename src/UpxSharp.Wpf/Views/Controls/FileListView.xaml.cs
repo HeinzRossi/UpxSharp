@@ -13,18 +13,13 @@ namespace UpxSharp.Wpf.Views.Controls
     ///   • Duplo clique → abrir pasta do arquivo
     ///   • Tecla Delete → remover arquivos selecionados
     ///   • Menu de contexto com ações contextuais
-    ///   • Arrastar arquivos para a lista (além da drop zone)
+    ///   • Menu de contexto com ações contextuais
     /// </summary>
     public partial class FileListView : UserControl
     {
         public FileListView()
         {
             InitializeComponent();
-
-            // Habilita drop diretamente na lista (quando já há arquivos)
-            FileGrid.AllowDrop = true;
-            FileGrid.Drop     += FileGrid_Drop;
-            FileGrid.DragOver += FileGrid_DragOver;
         }
 
         // ── Dependência: ICommand para abrir pasta ──────────────────────────────
@@ -142,25 +137,6 @@ namespace UpxSharp.Wpf.Views.Controls
             var command = GetMainViewModel()?.ClearFilesCommand;
             if (command?.CanExecute(null) == true)
                 command.Execute(null);
-        }
-
-        // ── Drag & Drop na lista (complementar ao FileDropPanel) ───────────────
-
-        private void FileGrid_Drop(object sender, DragEventArgs e)
-        {
-            if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
-            var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            if (files?.Length > 0)
-                GetMainViewModel()?.FilesDroppedCommand.Execute(files);
-            e.Handled = true;
-        }
-
-        private void FileGrid_DragOver(object sender, DragEventArgs e)
-        {
-            e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop)
-                ? DragDropEffects.Copy
-                : DragDropEffects.None;
-            e.Handled = true;
         }
 
         // ── Helpers ─────────────────────────────────────────────────────────────

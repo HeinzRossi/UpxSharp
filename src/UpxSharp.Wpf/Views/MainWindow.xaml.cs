@@ -1,8 +1,10 @@
 using System.ComponentModel;
 using System.IO;
+using System.Security.Principal;
 using System.Windows;
 using System.Windows.Input;
 using UpxSharp.Wpf.Services;
+using UpxSharp.Wpf.ViewModels;
 
 namespace UpxSharp.Wpf.Views;
 
@@ -16,6 +18,17 @@ public partial class MainWindow : Window
         InitializeComponent();
         RestoreWindowSettings();
         Closing += OnClosing;
+        Loaded += OnLoaded;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (IsProcessElevated() && DataContext is MainViewModel viewModel)
+        {
+            viewModel.ProgressViewModel.AddLog(
+                "Drag and drop pode ser bloqueado quando o UpxSharp roda como administrador.",
+                LogLevel.Warning);
+        }
     }
 
     private void RestoreWindowSettings()
@@ -100,4 +113,51 @@ public partial class MainWindow : Window
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
         => Close();
+
+    private void Window_PreviewDragEnter(object sender, DragEventArgs e)
+        => HandleDrag(e, updateHover: true);
+
+    private void Window_PreviewDragOver(object sender, DragEventArgs e)
+        => HandleDrag(e, updateHover: true);
+
+    private void Window_PreviewDragLeave(object sender, DragEventArgs e)
+    {
+        if (DataContext is MainViewModel viewModel)
+            viewModel.IsDragOver = false;
+
+        e.Handled = true;
+    }
+
+    private void Window_PreviewDrop(object sender, DragEventArgs e)
+    {
+        string[] files = DragDropFileHelper.GetExistingFiles(e.Data);
+        if (DataContext is MainViewModel viewModel)
+        {
+            viewModel.IsDragOver = false;
+            if (files.Length > 0 && viewModel.FilesDroppedCommand.CanExecute(files))
+                viewModel.FilesDroppedCommand.Execute(files);
+        }
+
+        e.Effects = files.Length > 0 ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void HandleDrag(DragEventArgs e, bool updateHover)
+    {
+        string[] files = DragDropFileHelper.GetExistingFiles(e.Data);
+        bool hasFiles = files.Length > 0;
+        e.Effects = hasFiles ? DragDropEffects.Copy : DragDropEffects.None;
+
+        if (updateHover && DataContext is MainViewModel viewModel)
+            viewModel.IsDragOver = hasFiles;
+
+        e.Handled = true;
+    }
+
+    private static bool IsProcessElevated()
+    {
+        using WindowsIdentity identity = WindowsIdentity.GetCurrent();
+        var principal = new WindowsPrincipal(identity);
+        return principal.IsInRole(WindowsBuiltInRole.Administrator);
+    }
 }

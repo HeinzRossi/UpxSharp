@@ -11,7 +11,7 @@ public sealed class ProgressViewModelTests
         var viewModel = new ProgressViewModel();
 
         viewModel.UpdateCurrentFile("sample.exe", 84);
-        await Task.Delay(320);
+        await WaitUntilAsync(() => viewModel.CurrentFileProgressPercent >= 84);
 
         viewModel.UpdateCurrentFile("sample.exe", 100);
         await Task.Delay(80);
@@ -35,5 +35,14 @@ public sealed class ProgressViewModelTests
 
         Assert.Equal(0, viewModel.OverallProgressPercent);
         Assert.Equal(0, viewModel.CurrentFileProgressPercent);
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        while (!condition())
+        {
+            await Task.Delay(25, timeout.Token);
+        }
     }
 }
