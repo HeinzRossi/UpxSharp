@@ -41,13 +41,18 @@ public sealed class FileProcessingServiceTests
         using var directory = new TempDirectory();
         var first = CreateFileItem(directory.CreateFile("first.exe", CreateSyntheticPe(0x014C)));
         var second = CreateFileItem(directory.CreateFile("second.exe", CreateSyntheticPe(0x014C)));
+        var current = new List<double>();
         var overall = new List<double>();
 
         var service = new FileProcessingService();
         await service.ProcessAsync(
             [first, second],
             CreateRequest(UpxCommand.Compress, FileOutputMode.SameDirectoryWithSuffix, force: true),
-            (file, progress) => file.Progress = progress,
+            (file, progress) =>
+            {
+                file.Progress = progress;
+                current.Add(progress);
+            },
             overall.Add,
             (_, _) => { },
             CancellationToken.None);
@@ -55,8 +60,34 @@ public sealed class FileProcessingServiceTests
         Assert.Equal(100, first.Progress);
         Assert.Equal(100, second.Progress);
         Assert.Equal(100, overall[^1]);
+        Assert.Contains(current, value => value is > 35 and < 85);
         Assert.Contains(overall, value => value is > 0 and < 50);
         Assert.Contains(overall, value => value is > 50 and < 100);
+    }
+
+    [Fact]
+    public async Task TestRoundTrip_ReportsCurrentAndOverallIntermediateProgress()
+    {
+        using var directory = new TempDirectory();
+        var file = CreateFileItem(directory.CreateFile("sample.com", CreateDosCom()));
+        var current = new List<double>();
+        var overall = new List<double>();
+
+        var service = new FileProcessingService();
+        await service.ProcessAsync(
+            [file],
+            CreateRequest(UpxCommand.Test, FileOutputMode.SameDirectoryWithSuffix),
+            (_, progress) => current.Add(progress),
+            overall.Add,
+            (_, _) => { },
+            CancellationToken.None);
+
+        Assert.Equal(100, current[^1]);
+        Assert.Equal(100, overall[^1]);
+        Assert.Contains(current, value => value is > 20 and < 55);
+        Assert.Contains(current, value => value is > 58 and < 88);
+        Assert.Contains(overall, value => value is > 20 and < 55);
+        Assert.Contains(overall, value => value is > 58 and < 88);
     }
 
     [Fact]
@@ -97,6 +128,42 @@ public sealed class FileProcessingServiceTests
 
         Assert.Equal(original, File.ReadAllBytes(inputPath + ".bak"));
         Assert.True(File.Exists(Path.Combine(outputDirectory, "sample.upx")));
+    }
+
+    [Fact]
+    public async Task Compress_WithBackup_NotifiesExplorerAfterSuccessfulOutputAndBackup()
+    {
+        using var directory = new TempDirectory();
+        string inputPath = directory.CreateFile("sample.exe", CreateSyntheticPe(0x014C));
+        string outputPath = Path.Combine(directory.Path, "sample.upx");
+        string backupPath = inputPath + ".bak";
+        var notifications = new List<ShellChangeNotification>();
+
+        var service = new FileProcessingService(notifications.Add);
+        await service.ProcessAsync(
+            [CreateFileItem(inputPath)],
+            CreateRequest(
+                UpxCommand.Compress,
+                FileOutputMode.SameDirectoryWithSuffix,
+                force: true,
+                keepBackup: true),
+            (_, _) => { },
+            _ => { },
+            (_, _) => { },
+            CancellationToken.None);
+
+        Assert.Contains(notifications, notification =>
+            notification.Path == inputPath && notification.Event == ShellChangeEvent.UpdateItem);
+        Assert.Contains(notifications, notification =>
+            notification.Path == inputPath && notification.Event == ShellChangeEvent.Attributes);
+        Assert.Contains(notifications, notification =>
+            notification.Path == outputPath && notification.Event == ShellChangeEvent.UpdateItem);
+        Assert.Contains(notifications, notification =>
+            notification.Path == backupPath && notification.Event == ShellChangeEvent.UpdateItem);
+        Assert.Contains(notifications, notification =>
+            notification.Path == directory.Path && notification.Event == ShellChangeEvent.UpdateDir);
+        Assert.Contains(notifications, notification =>
+            notification.Path is null && notification.Event == ShellChangeEvent.AssociationChanged);
     }
 
     [Fact]
@@ -213,6 +280,25 @@ public sealed class FileProcessingServiceTests
         Assert.Equal(original, File.ReadAllBytes(inputPath));
         Assert.DoesNotContain(Directory.EnumerateFiles(directory.Path), path => path.EndsWith(".tmp"));
         Assert.Contains(logs, message => message.Contains("resultado não ficou menor"));
+    }
+
+    [Fact]
+    public async Task Compress_WhenOutputFails_DoesNotNotifyExplorerForFinalOutput()
+    {
+        using var directory = new TempDirectory();
+        string inputPath = directory.CreateFile("sample.com", CreateDosCom());
+        var notifications = new List<ShellChangeNotification>();
+        var service = new FileProcessingService(notifications.Add);
+
+        await service.ProcessAsync(
+            [CreateFileItem(inputPath)],
+            CreateRequest(UpxCommand.Compress, FileOutputMode.ReplaceOriginal),
+            (_, _) => { },
+            _ => { },
+            (_, _) => { },
+            CancellationToken.None);
+
+        Assert.Empty(notifications);
     }
 
     [Fact]

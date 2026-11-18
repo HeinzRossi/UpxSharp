@@ -11,7 +11,12 @@
         Icon="/UpxSharp.Wpf;component/Assets/Icons/upxsharp-logo.ico"
         WindowStyle="None" AllowsTransparency="True"
         Background="{StaticResource Brush.Background.Deep}"
-        ResizeMode="CanResizeWithGrip">
+        ResizeMode="CanResizeWithGrip"
+        AllowDrop="True"
+        PreviewDragEnter="Window_PreviewDragEnter"
+        PreviewDragOver="Window_PreviewDragOver"
+        PreviewDragLeave="Window_PreviewDragLeave"
+        PreviewDrop="Window_PreviewDrop">
 
     <Window.InputBindings>
         <KeyBinding Key="O" Modifiers="Control" Command="{Binding BrowseFilesCommand}" />

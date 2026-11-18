@@ -11,6 +11,16 @@ namespace UpxSharp.Wpf.Services;
 
 public sealed class FileProcessingService : IFileProcessingService
 {
+    private readonly Action<ShellChangeNotification> _notifyShellChanged;
+
+    public FileProcessingService()
+        : this(NotifyShellChanged)
+    {
+    }
+
+    public FileProcessingService(Action<ShellChangeNotification> notifyShellChanged)
+        => _notifyShellChanged = notifyShellChanged;
+
     public async Task ProcessAsync(
         IEnumerable<FileItemViewModel> files,
         FileProcessingRequest request,
@@ -39,23 +49,31 @@ public sealed class FileProcessingService : IFileProcessingService
 
             try
             {
+                void ReportCurrentProgress(double currentPercent)
+                    => ReportProgress(file, currentPercent, fileIndex, fileList.Count, onProgress, onOverallProgress);
+
                 ProcessingResult result = await Task.Run(() =>
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    ReportProgress(file, 15, fileIndex, fileList.Count, onProgress, onOverallProgress);
+                    ReportCurrentProgress(10);
 
                     if (request.Options.Command == UpxCommand.Test)
-                        return TestRoundTrip(file.FilePath, request.Options, file, onProgress, cancellationToken);
+                        return TestRoundTrip(file.FilePath, request.Options, ReportCurrentProgress, cancellationToken);
 
                     string outputPath = ResolveOutputPath(file.FilePath, request);
                     bool replaceOriginal = request.OutputMode == FileOutputMode.ReplaceOriginal;
                     partialOutputPath = CreateTemporaryPathBeside(outputPath);
 
-                    ReportProgress(file, 35, fileIndex, fileList.Count, onProgress, onOverallProgress);
-                    ProcessFile(
-                        file.FilePath,
-                        partialOutputPath,
-                        request.Options,
+                    ReportCurrentProgress(25);
+                    RunWithEstimatedProgress(
+                        () => ProcessFile(
+                            file.FilePath,
+                            partialOutputPath,
+                            request.Options,
+                            cancellationToken),
+                        ReportCurrentProgress,
+                        35,
+                        84,
                         cancellationToken);
 
                     RejectGrownCompressedOutput(
@@ -64,25 +82,39 @@ public sealed class FileProcessingService : IFileProcessingService
                         request.Options);
 
                     cancellationToken.ThrowIfCancellationRequested();
-                    ReportProgress(file, 90, fileIndex, fileList.Count, onProgress, onOverallProgress);
+                    ReportCurrentProgress(85);
+
+                    string? backupPath = request.Options.KeepBackup ? file.FilePath + ".bak" : null;
 
                     if (replaceOriginal)
                     {
+                        ReportCurrentProgress(request.Options.KeepBackup ? 88 : 92);
                         ReplaceOriginalSafely(
                             partialOutputPath,
                             file.FilePath,
                             request.Options.KeepBackup);
                         partialOutputPath = null;
                         outputPath = file.FilePath;
+                        ReportCurrentProgress(95);
                     }
                     else
                     {
                         if (request.Options.KeepBackup)
+                        {
                             CreateBackupCopy(file.FilePath);
+                            ReportCurrentProgress(90);
+                        }
 
+                        ReportCurrentProgress(93);
                         File.Move(partialOutputPath, outputPath, overwrite: true);
                         partialOutputPath = null;
+                        ReportCurrentProgress(95);
                     }
+
+                    RefreshFileSystemMetadata(file.FilePath, outputPath, backupPath);
+                    ReportCurrentProgress(96);
+                    NotifyProcessedPaths(file.FilePath, outputPath, backupPath);
+                    ReportCurrentProgress(99);
 
                     return new ProcessingResult(outputPath, new FileInfo(outputPath).Length);
                 }, cancellationToken);
@@ -90,7 +122,6 @@ public sealed class FileProcessingService : IFileProcessingService
                 stopwatch.Stop();
                 file.CompressedSize = result.ResultSize;
                 file.Status = FileProcessingStatus.Done;
-                ReportProgress(file, 100, fileIndex, fileList.Count, onProgress, onOverallProgress);
 
                 string action = request.Options.Command switch
                 {
@@ -104,6 +135,8 @@ public sealed class FileProcessingService : IFileProcessingService
                     $"{file.CompressedSizeFormatted} ({file.RatioFormatted}) em " +
                     $"{stopwatch.Elapsed.TotalSeconds:F1}s. Saída: {result.OutputPath}",
                     LogLevel.Success);
+
+                ReportCurrentProgress(100);
             }
             catch (OperationCanceledException)
             {
@@ -156,8 +189,7 @@ public sealed class FileProcessingService : IFileProcessingService
     private static ProcessingResult TestRoundTrip(
         string inputPath,
         Options options,
-        FileItemViewModel file,
-        Action<FileItemViewModel, double> onProgress,
+        Action<double> reportProgress,
         CancellationToken cancellationToken)
     {
         string packedPath = Path.Combine(
@@ -168,19 +200,30 @@ public sealed class FileProcessingService : IFileProcessingService
         try
         {
             var packOptions = CopyOptions(options, UpxCommand.Compress);
-            ProcessFile(inputPath, packedPath, packOptions, cancellationToken);
+            RunWithEstimatedProgress(
+                () => ProcessFile(inputPath, packedPath, packOptions, cancellationToken),
+                reportProgress,
+                20,
+                50,
+                cancellationToken);
             long packedSize = new FileInfo(packedPath).Length;
-            onProgress(file, 55);
+            reportProgress(52);
 
             var unpackOptions = CopyOptions(options, UpxCommand.Decompress);
-            ProcessFile(packedPath, unpackedPath, unpackOptions, cancellationToken);
-            onProgress(file, 85);
+            RunWithEstimatedProgress(
+                () => ProcessFile(packedPath, unpackedPath, unpackOptions, cancellationToken),
+                reportProgress,
+                58,
+                84,
+                cancellationToken);
+            reportProgress(86);
 
             cancellationToken.ThrowIfCancellationRequested();
             if (!FilesAreEqual(inputPath, unpackedPath))
                 throw new CorruptedPackException(
                     "Teste falhou: arquivo restaurado difere do original.");
 
+            reportProgress(99);
             return new ProcessingResult("Teste concluído sem criar saída", packedSize);
         }
         finally
@@ -216,6 +259,56 @@ public sealed class FileProcessingService : IFileProcessingService
 
         output.Flush();
         cancellationToken.ThrowIfCancellationRequested();
+    }
+
+    private static void RunWithEstimatedProgress(
+        Action action,
+        Action<double> reportProgress,
+        double startPercent,
+        double endPercent,
+        CancellationToken cancellationToken)
+    {
+        using var finished = new ManualResetEventSlim();
+        Exception? pumpException = null;
+
+        reportProgress(startPercent);
+        reportProgress(Math.Min(startPercent + 5, endPercent));
+
+        Task pump = Task.Run(() =>
+        {
+            try
+            {
+                double current = Math.Min(startPercent + 8, endPercent);
+                while (!finished.Wait(150))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    reportProgress(current);
+                    double remaining = endPercent - current;
+                    if (remaining > 1)
+                        current += Math.Max(0.5, remaining * 0.2);
+                }
+            }
+            catch (Exception ex)
+            {
+                pumpException = ex;
+            }
+        }, CancellationToken.None);
+
+        try
+        {
+            action();
+        }
+        finally
+        {
+            finished.Set();
+            pump.GetAwaiter().GetResult();
+        }
+
+        if (pumpException is not null)
+            throw pumpException;
+
+        cancellationToken.ThrowIfCancellationRequested();
+        reportProgress(endPercent);
     }
 
     private static bool TryProcessWithOfficialUpx(
@@ -316,6 +409,13 @@ public sealed class FileProcessingService : IFileProcessingService
     private static extern bool GetBinaryType(
         string lpApplicationName,
         out uint lpBinaryType);
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    private static extern void SHChangeNotify(
+        uint wEventId,
+        uint uFlags,
+        string? dwItem1,
+        string? dwItem2);
 
     private static bool IsWindowsPe(string path)
     {
@@ -440,6 +540,90 @@ public sealed class FileProcessingService : IFileProcessingService
         return Path.Combine(directory, $".{fileName}.{Guid.NewGuid():N}.tmp");
     }
 
+    private void NotifyProcessedPaths(string originalPath, string outputPath, string? backupPath)
+    {
+        NotifyFileChangedBestEffort(originalPath);
+        NotifyFileChangedBestEffort(outputPath);
+
+        if (!string.IsNullOrWhiteSpace(backupPath))
+            NotifyFileChangedBestEffort(backupPath);
+
+        string? originalDirectory = Path.GetDirectoryName(originalPath);
+        string? outputDirectory = Path.GetDirectoryName(outputPath);
+        if (!string.IsNullOrWhiteSpace(originalDirectory))
+            NotifyDirectoryChangedBestEffort(originalDirectory);
+        if (!string.IsNullOrWhiteSpace(outputDirectory) &&
+            !string.Equals(originalDirectory, outputDirectory, StringComparison.OrdinalIgnoreCase))
+        {
+            NotifyDirectoryChangedBestEffort(outputDirectory);
+        }
+
+        NotifyShellChangedBestEffort(new ShellChangeNotification(
+            null,
+            ShellChangeEvent.AssociationChanged));
+    }
+
+    private void NotifyFileChangedBestEffort(string path)
+    {
+        NotifyShellChangedBestEffort(new ShellChangeNotification(
+            path,
+            ShellChangeEvent.UpdateItem));
+        NotifyShellChangedBestEffort(new ShellChangeNotification(
+            path,
+            ShellChangeEvent.Attributes));
+    }
+
+    private void NotifyDirectoryChangedBestEffort(string path)
+        => NotifyShellChangedBestEffort(new ShellChangeNotification(
+            path,
+            ShellChangeEvent.UpdateDir));
+
+    private void NotifyShellChangedBestEffort(ShellChangeNotification notification)
+    {
+        try
+        {
+            _notifyShellChanged(notification);
+        }
+        catch
+        {
+            // Explorer refresh is best-effort and must not fail processing.
+        }
+    }
+
+    private static void RefreshFileSystemMetadata(string originalPath, string outputPath, string? backupPath)
+    {
+        RefreshPathBestEffort(originalPath);
+        RefreshPathBestEffort(outputPath);
+
+        if (!string.IsNullOrWhiteSpace(backupPath))
+            RefreshPathBestEffort(backupPath);
+
+        string? originalDirectory = Path.GetDirectoryName(originalPath);
+        string? outputDirectory = Path.GetDirectoryName(outputPath);
+        if (!string.IsNullOrWhiteSpace(originalDirectory))
+            RefreshPathBestEffort(originalDirectory);
+        if (!string.IsNullOrWhiteSpace(outputDirectory) &&
+            !string.Equals(originalDirectory, outputDirectory, StringComparison.OrdinalIgnoreCase))
+        {
+            RefreshPathBestEffort(outputDirectory);
+        }
+    }
+
+    private static void RefreshPathBestEffort(string path)
+    {
+        try
+        {
+            if (Directory.Exists(path))
+                new DirectoryInfo(path).Refresh();
+            else
+                new FileInfo(path).Refresh();
+        }
+        catch
+        {
+            // Metadata refresh is best-effort before Explorer notification.
+        }
+    }
+
     private static void ReplaceOriginalSafely(
         string temporaryPath,
         string originalPath,
@@ -554,5 +738,41 @@ public sealed class FileProcessingService : IFileProcessingService
         }
     }
 
+    private static void NotifyShellChanged(ShellChangeNotification notification)
+    {
+        const uint shcneUpdateItem = 0x00002000;
+        const uint shcneUpdateDir = 0x00001000;
+        const uint shcneAttributes = 0x00000800;
+        const uint shcneAssocChanged = 0x08000000;
+        const uint shcnfPathW = 0x0005;
+        const uint shcnfIdList = 0x0000;
+        const uint shcnfFlush = 0x1000;
+
+        uint eventId = notification.Event switch
+        {
+            ShellChangeEvent.UpdateItem => shcneUpdateItem,
+            ShellChangeEvent.UpdateDir => shcneUpdateDir,
+            ShellChangeEvent.Attributes => shcneAttributes,
+            ShellChangeEvent.AssociationChanged => shcneAssocChanged,
+            _ => shcneUpdateItem,
+        };
+
+        uint flags = notification.Path is null
+            ? shcnfIdList | shcnfFlush
+            : shcnfPathW | shcnfFlush;
+
+        SHChangeNotify(eventId, flags, notification.Path, null);
+    }
+
     private sealed record ProcessingResult(string OutputPath, long ResultSize);
+}
+
+public sealed record ShellChangeNotification(string? Path, ShellChangeEvent Event);
+
+public enum ShellChangeEvent
+{
+    UpdateItem,
+    Attributes,
+    UpdateDir,
+    AssociationChanged,
 }
